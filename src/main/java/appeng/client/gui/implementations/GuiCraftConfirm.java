@@ -282,11 +282,8 @@ public class GuiCraftConfirm extends AEBaseGui {
                             ratioStr = String.format("%s: %.2f%%", GuiText.Used.getLocal(), usedPercent);
                         }
                         final int wRatio = 4 + this.fontRenderer.getStringWidth(ratioStr);
-                        this.fontRenderer.drawString(ratioStr,
-                                (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (wRatio * 0.5)) * 2),
-                                (y * offY + yo + 6 - negY + downY) * 2,
-                                4210752
-                        );
+                        this.fontRenderer.drawString(ratioStr,(int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (wRatio * 0.5)) * 2),
+                                (y * offY + yo + 6 - negY + downY) * 2,4210752);
                         downY += 5;
                     }
                 }
