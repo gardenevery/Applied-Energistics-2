@@ -246,6 +246,8 @@ public class GuiCraftConfirm extends AEBaseGui {
                 if (pendingStack != null && pendingStack.getStackSize() > 0) {
                     lines++;
                 }
+                if (materialRatios.containsKey(refStack)) lines++;
+                if (craftingRounds.containsKey(refStack)) lines++;
 
                 final int negY = ((lines - 1) * 5) / 2;
                 int downY = 0;
@@ -272,7 +274,13 @@ public class GuiCraftConfirm extends AEBaseGui {
 
                     Double ratio = this.materialRatios.get(refStack);
                     if (ratio != null && ratio > 0) {
-                        String ratioStr = String.format("%s: %.1f%%", GuiText.Used.getLocal(), ratio * 100);
+                        double usedPercent = ratio * 100;
+                        String ratioStr;
+                        if (usedPercent < 0.01) {
+                            ratioStr = GuiText.Used.getLocal() + ": <0.01%";
+                        } else {
+                            ratioStr = String.format("%s: %.2f%%", GuiText.Used.getLocal(), usedPercent);
+                        }
                         final int wRatio = 4 + this.fontRenderer.getStringWidth(ratioStr);
                         this.fontRenderer.drawString(ratioStr,
                                 (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (wRatio * 0.5)) * 2),
@@ -353,10 +361,14 @@ public class GuiCraftConfirm extends AEBaseGui {
 
                     Double ratio = this.materialRatios.get(refStack);
                     if (ratio != null && ratio > 0) {
-                        lineList.add(String.format("%s: %.1f%%",
-                                GuiText.Used.getLocal(),
-                                ratio * 100
-                        ));
+                        double usedPercent = ratio * 100;
+                        String ratioDisplay;
+                        if (usedPercent < 0.01) {
+                            ratioDisplay = GuiText.Used.getLocal() + ": <0.01%";
+                        } else {
+                            ratioDisplay = String.format("%s: %.2f%%", GuiText.Used.getLocal(), usedPercent);
+                        }
+                        lineList.add(ratioDisplay);
                     }
 
                     Long rounds = this.craftingRounds.get(refStack);
