@@ -50,9 +50,7 @@ import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 
 public class GuiCraftConfirm extends AEBaseGui {
@@ -66,6 +64,8 @@ public class GuiCraftConfirm extends AEBaseGui {
     private final IItemList<IAEItemStack> missing = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class).createList();
 
     private final List<IAEItemStack> visual = new ArrayList<>();
+    private final Map<IAEItemStack, Long> craftingRounds = new HashMap<>();
+    private final Map<IAEItemStack, Double> materialRatios = new HashMap<>();
 
     private GuiBridge OriginalGui;
     private GuiButton cancel;
@@ -269,6 +269,18 @@ public class GuiCraftConfirm extends AEBaseGui {
                     }
 
                     downY += 5;
+
+                    Double ratio = this.materialRatios.get(refStack);
+                    if (ratio != null && ratio > 0) {
+                        String ratioStr = String.format("%s: %.1f%%", GuiText.Used.getLocal(), ratio * 100);
+                        final int wRatio = 4 + this.fontRenderer.getStringWidth(ratioStr);
+                        this.fontRenderer.drawString(ratioStr,
+                                (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (wRatio * 0.5)) * 2),
+                                (y * offY + yo + 6 - negY + downY) * 2,
+                                4210752
+                        );
+                        downY += 5;
+                    }
                 }
 
                 boolean red = false;
@@ -305,11 +317,28 @@ public class GuiCraftConfirm extends AEBaseGui {
 
                     str = GuiText.ToCraft.getLocal() + ": " + str;
                     final int w = 4 + this.fontRenderer.getStringWidth(str);
-                    this.fontRenderer.drawString(str, (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
-                            (y * offY + yo + 6 - negY + downY) * 2, 4210752);
+                    this.fontRenderer.drawString(str,
+                            (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
+                            (y * offY + yo + 6 - negY + downY) * 2,
+                            4210752
+                    );
 
                     if (this.tooltip == z - viewStart) {
                         lineList.add(GuiText.ToCraft.getLocal() + ": " + pendingStack.getStackSize());
+                    }
+
+                    downY += 5;
+
+                    Long rounds = this.craftingRounds.get(refStack);
+                    if (rounds != null && rounds > 0) {
+                        String roundsStr = String.format("%s: %d", GuiText.Steps.getLocal(), rounds);
+                        final int wRounds = 4 + this.fontRenderer.getStringWidth(roundsStr);
+                        this.fontRenderer.drawString(roundsStr,
+                                (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (wRounds * 0.5)) * 2),
+                                (y * offY + yo + 6 - negY + downY) * 2,
+                                4210752
+                        );
+                        downY += 5;
                     }
                 }
 
@@ -321,6 +350,22 @@ public class GuiCraftConfirm extends AEBaseGui {
 
                 if (this.tooltip == z - viewStart) {
                     dspToolTip = Platform.getItemDisplayName(refStack);
+
+                    Double ratio = this.materialRatios.get(refStack);
+                    if (ratio != null && ratio > 0) {
+                        lineList.add(String.format("%s: %.1f%%",
+                                GuiText.Used.getLocal(),
+                                ratio * 100
+                        ));
+                    }
+
+                    Long rounds = this.craftingRounds.get(refStack);
+                    if (rounds != null && rounds > 0) {
+                        lineList.add(String.format("%s: %d",
+                                GuiText.Steps.getLocal(),
+                                rounds
+                        ));
+                    }
 
                     if (lineList.size() > 0) {
                         dspToolTip = dspToolTip + '\n' + Joiner.on("\n").join(lineList);
@@ -385,6 +430,14 @@ public class GuiCraftConfirm extends AEBaseGui {
                     this.handleInput(this.missing, l);
                 }
                 break;
+
+            case 3:
+                this.handleCraftingRounds(list);
+                break;
+
+            case 4:
+                this.handleMaterialRatios(list);
+                break;
         }
 
         for (final IAEItemStack l : list) {
@@ -399,6 +452,24 @@ public class GuiCraftConfirm extends AEBaseGui {
         }
 
         this.setScrollBar();
+    }
+
+    private void handleMaterialRatios(List<IAEItemStack> itemStacks) {
+        for (final IAEItemStack stack : itemStacks) {
+            double ratio = stack.getStackSize() / 10000.0;
+            IAEItemStack key = stack.copy();
+            key.setStackSize(1);
+            this.materialRatios.put(key, ratio);
+        }
+    }
+
+    private void handleCraftingRounds(List<IAEItemStack> list) {
+        this.craftingRounds.clear();
+        for (IAEItemStack stack : list) {
+            IAEItemStack key = stack.copy();
+            key.setStackSize(1);
+            this.craftingRounds.put(key, stack.getStackSize());
+        }
     }
 
     private void handleInput(final IItemList<IAEItemStack> s, final IAEItemStack l) {

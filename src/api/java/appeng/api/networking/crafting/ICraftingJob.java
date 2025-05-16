@@ -26,6 +26,7 @@ package appeng.api.networking.crafting;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
+import org.jetbrains.annotations.Nullable;
 
 
 public interface ICraftingJob
@@ -54,4 +55,9 @@ public interface ICraftingJob
 	 * @return the final output of the job.
 	 */
 	IAEItemStack getOutput();
+
+	/**
+	 * @return Pattern Details.
+	 */
+	@Nullable ICraftingPatternDetails getPattern();
 }
