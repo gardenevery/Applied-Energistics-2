@@ -324,9 +324,7 @@ public class GuiCraftConfirm extends AEBaseGui {
                     final int w = 4 + this.fontRenderer.getStringWidth(str);
                     this.fontRenderer.drawString(str,
                             (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
-                            (y * offY + yo + 6 - negY + downY) * 2,
-                            4210752
-                    );
+                            (y * offY + yo + 6 - negY + downY) * 2,4210752);
 
                     if (this.tooltip == z - viewStart) {
                         lineList.add(GuiText.ToCraft.getLocal() + ": " + pendingStack.getStackSize());
@@ -340,9 +338,7 @@ public class GuiCraftConfirm extends AEBaseGui {
                         final int wRounds = 4 + this.fontRenderer.getStringWidth(roundsStr);
                         this.fontRenderer.drawString(roundsStr,
                                 (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (wRounds * 0.5)) * 2),
-                                (y * offY + yo + 6 - negY + downY) * 2,
-                                4210752
-                        );
+                                (y * offY + yo + 6 - negY + downY) * 2,4210752);
                         downY += 5;
                     }
                 }
