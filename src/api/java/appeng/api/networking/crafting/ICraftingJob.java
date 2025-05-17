@@ -56,8 +56,12 @@ public interface ICraftingJob
 	 */
 	IAEItemStack getOutput();
 
-	/**
-	 * @return Pattern Details.
-	 */
-	@Nullable ICraftingPatternDetails getPattern();
+        /**
+         * Retrieves the crafting pattern details associated with this crafting job.
+         * 
+         * @return The pattern details used for this crafting operation, 
+         *         or null if the job isn't bound to a specific pattern (e.g. player-initiated manual crafting)
+         */
+        @Nullable
+        ICraftingPatternDetails getPattern();
 }
