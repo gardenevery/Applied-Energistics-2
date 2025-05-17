@@ -266,8 +266,7 @@ public class ContainerCraftConfirm extends AEBaseContainer {
 
                         double ratio = 0.0;
                         if (requested > 0) {
-                            long min = Math.min(available, maxAvailable);
-                            ratio = (double) min / maxAvailable;
+                        ratio = (double) available / maxAvailable;
                             ratio = Math.round(ratio * 10000.0) / 10000.0;
                         }
 
