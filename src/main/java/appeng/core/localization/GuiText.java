@@ -164,8 +164,8 @@ public enum GuiText {
 
     FromStorage,
     ToCraft,
-    Steps,
-    Used,
+    PatternExecutionCount,
+    MaterialUsagePercentage,
     CraftingPlan,
     CalculatingWait,
     Start,
