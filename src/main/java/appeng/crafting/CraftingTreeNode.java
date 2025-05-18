@@ -34,16 +34,13 @@ import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.MeaningfulItemIterator;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class CraftingTreeNode {
 
@@ -398,19 +395,20 @@ public class CraftingTreeNode {
         return this.slot;
     }
 
-    @Nullable
-    public ICraftingPatternDetails getPattern() {
-        if (!this.nodes.isEmpty()) {
-            return this.nodes.get(0).getPatternDetails();
-        }
-        return null;
-    }
+    public long getTotalCraftsForPrimaryOutput(IAEItemStack targetMaterial) {
+        long total = 0;
 
-    public List<ICraftingPatternDetails> getPatterns() {
-        List<ICraftingPatternDetails> patterns = new ArrayList<>();
         for (CraftingTreeProcess process : this.nodes) {
-            patterns.add(process.getPatternDetails());
+            if (process.isPrimaryOutput(targetMaterial)) {
+                total += process.getCrafts();
+            }
+
+            for (Object2LongMap.Entry<CraftingTreeNode> entry : process.nodes.object2LongEntrySet()) {
+                CraftingTreeNode childNode = entry.getKey();
+                total += childNode.getTotalCraftsForPrimaryOutput(targetMaterial);
+            }
         }
-        return patterns;
+
+        return total;
     }
 }
