@@ -60,9 +60,9 @@ public interface ICraftingJob
 	 * The primary output is defined as the first output item in a crafting pattern.
 	 *
 	 * @param keyItem The item to check, which must match the primary output of relevant patterns.
-	 *               Use {@link IAEItemStack#reset()} to ignore stack size when matching.
+	 * Use {@link IAEItemStack#reset()} to ignore stack size when matching.
 	 * @return Total crafting count for the item as primary output. Returns 0 if the item
-	 *         is not a primary output in any relevant pattern or simulation isn't complete.
+	 * is not a primary output in any relevant pattern or simulation isn't complete.
 	 * @throws IllegalArgumentException If keyItem is null or invalid.
 	 * @throws IllegalStateException If called before simulation completes (when {@link #isSimulation()} returns false).
 	 */
