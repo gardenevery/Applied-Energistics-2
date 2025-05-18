@@ -60,9 +60,7 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 
 
@@ -200,7 +198,23 @@ public class ContainerCraftConfirm extends AEBaseContainer {
                     this.result.populatePlan(plan);
 
                     this.setUsedBytes(this.result.getByteTotal());
-                    final ICraftingPatternDetails pattern = this.result.getPattern();
+
+                    Map<IAEItemStack, Long> craftCounts = new HashMap<>();
+                    for (final IAEItemStack item : plan) {
+                        try {
+                            IAEItemStack keyItem = item.copy().reset();
+                            long count = this.result.getTotalCraftsForPrimaryOutput(keyItem);
+                            if (count > 0) {
+                                craftCounts.put(keyItem, count);
+
+                                IAEItemStack countStack = keyItem.copy();
+                                countStack.setStackSize(count);
+                                d.appendItem(countStack);
+                            }
+                        } catch (IllegalArgumentException ex) {
+                            AELog.debug("Invalid item for craft count: " + item, ex);
+                        }
+                    }
 
                     final IStorageGrid sg = grid.getCache(IStorageGrid.class);
                     final IMEMonitor<IAEItemStack> items = sg.getInventory(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class));
@@ -239,24 +253,6 @@ public class ContainerCraftConfirm extends AEBaseContainer {
                             }
                         }
 
-                        if (d != null && pattern != null) {
-                            long craftPerCycle = 0;
-                            for (IAEItemStack output : pattern.getOutputs()) {
-                                if (output.isSameType(out)) {
-                                    craftPerCycle += output.getStackSize();
-                                }
-                            }
-
-                            if (craftPerCycle > 0) {
-                                long rounds = (p.getStackSize() + craftPerCycle - 1) / craftPerCycle;
-                                if (rounds > 0) {
-                                    IAEItemStack roundItem = out.copy();
-                                    roundItem.setStackSize(rounds);
-                                    d.appendItem(roundItem);
-                                }
-                            }
-                        }
-
                         if (maxAvailable <= 0) {
                             continue;
                         }
@@ -282,7 +278,7 @@ public class ContainerCraftConfirm extends AEBaseContainer {
                             NetworkHandler.instance().sendTo(a, (EntityPlayerMP) g);
                             NetworkHandler.instance().sendTo(b, (EntityPlayerMP) g);
                             if (c != null) NetworkHandler.instance().sendTo(c, (EntityPlayerMP) g);
-                            if (d != null) NetworkHandler.instance().sendTo(d, (EntityPlayerMP) g);
+                            NetworkHandler.instance().sendTo(d, (EntityPlayerMP) g);
                             NetworkHandler.instance().sendTo(e, (EntityPlayerMP) g);
                         }
                     }
