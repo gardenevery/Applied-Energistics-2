@@ -42,7 +42,6 @@ import com.google.common.base.Stopwatch;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
