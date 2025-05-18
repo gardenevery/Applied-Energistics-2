@@ -39,7 +39,7 @@ public class CraftingTreeProcess {
     private final CraftingTreeNode parent;
     final ICraftingPatternDetails details;
     private final CraftingJob job;
-    private final Object2LongArrayMap<CraftingTreeNode> nodes = new Object2LongArrayMap<>();
+    final Object2LongArrayMap<CraftingTreeNode> nodes = new Object2LongArrayMap<>();
     private final int depth;
     private final ICraftingGrid cc;
     private final World world;
@@ -284,7 +284,12 @@ public class CraftingTreeProcess {
         }
     }
 
-    public ICraftingPatternDetails getPatternDetails() {
-        return this.details;
+    public boolean isPrimaryOutput(IAEItemStack target) {
+        IAEItemStack[] outputs = this.details.getCondensedOutputs();
+        return outputs != null && outputs.length > 0 && outputs[0].isSameType(target);
+    }
+
+    public long getCrafts() {
+        return this.crafts;
     }
 }
