@@ -25,7 +25,7 @@ package appeng.api.implementations.tiles;
 
 
 import appeng.api.networking.IGridHost;
-import appeng.api.storage.ICellContainer;
+import appeng.api.storage.cells.ICellContainer;
 import appeng.api.util.IOrientable;
 
 

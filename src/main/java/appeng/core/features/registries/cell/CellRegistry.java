@@ -20,6 +20,10 @@ package appeng.core.features.registries.cell;
 
 
 import appeng.api.storage.*;
+import appeng.api.storage.cells.ICellGuiHandler;
+import appeng.api.storage.cells.ICellHandler;
+import appeng.api.storage.cells.ICellInventoryHandler;
+import appeng.api.storage.cells.ISaveProvider;
 import appeng.api.storage.data.IAEStack;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;

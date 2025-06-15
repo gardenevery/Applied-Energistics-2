@@ -27,6 +27,10 @@ package appeng.api.storage;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import appeng.api.storage.cells.ICellGuiHandler;
+import appeng.api.storage.cells.ICellHandler;
+import appeng.api.storage.cells.ICellInventoryHandler;
+import appeng.api.storage.cells.ISaveProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
@@ -100,5 +104,5 @@ public interface ICellRegistry
 	 * @return new ICellInventoryHandler, or null if there isn't one.
 	 */
 	@Nullable
-	<T extends IAEStack<T>> ICellInventoryHandler<T> getCellInventory( ItemStack is, ISaveProvider host, IStorageChannel<T> chan );
+	<T extends IAEStack<T>> ICellInventoryHandler<T> getCellInventory(ItemStack is, ISaveProvider host, IStorageChannel<T> chan );
 }

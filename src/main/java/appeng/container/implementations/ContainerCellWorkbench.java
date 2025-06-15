@@ -24,7 +24,7 @@ import appeng.api.config.CopyMode;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
 import appeng.api.implementations.items.IStorageCell;
-import appeng.api.storage.ICellWorkbenchItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;

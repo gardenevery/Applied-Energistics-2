@@ -21,8 +21,8 @@ package appeng.me.storage;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.implementations.items.IStorageCell;
-import appeng.api.storage.ICellInventory;
-import appeng.api.storage.ISaveProvider;
+import appeng.api.storage.cells.ICellInventory;
+import appeng.api.storage.cells.ISaveProvider;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.Platform;

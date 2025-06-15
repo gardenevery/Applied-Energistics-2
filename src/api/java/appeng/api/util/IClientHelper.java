@@ -4,7 +4,7 @@ package appeng.api.util;
 
 import java.util.List;
 
-import appeng.api.storage.ICellInventoryHandler;
+import appeng.api.storage.cells.ICellInventoryHandler;
 import appeng.api.storage.data.IAEStack;
 
 

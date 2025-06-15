@@ -1,8 +1,8 @@
 package appeng.tile.inventory;
 
 
-import appeng.api.storage.ICellInventory;
-import appeng.api.storage.ICellInventoryHandler;
+import appeng.api.storage.cells.ICellInventory;
+import appeng.api.storage.cells.ICellInventoryHandler;
 import appeng.util.inv.IAEAppEngInventory;
 import appeng.util.inv.filter.IAEItemFilter;
 import net.minecraft.item.ItemStack;

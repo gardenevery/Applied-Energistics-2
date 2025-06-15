@@ -21,8 +21,8 @@ package appeng.me.storage;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.storage.ICellHandler;
-import appeng.api.storage.ICellInventoryHandler;
+import appeng.api.storage.cells.ICellHandler;
+import appeng.api.storage.cells.ICellInventoryHandler;
 import appeng.api.storage.data.IAEStack;
 import appeng.core.features.registries.cell.CreativeCellHandler;
 import appeng.me.GridAccessException;

@@ -28,7 +28,7 @@ import javax.annotation.Nonnull;
 
 import net.minecraft.item.ItemStack;
 
-import appeng.api.storage.ICellWorkbenchItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEStack;
 

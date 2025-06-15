@@ -33,6 +33,8 @@ import appeng.api.networking.storage.IStackWatcher;
 import appeng.api.networking.storage.IStackWatcherHost;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.*;
+import appeng.api.storage.cells.ICellContainer;
+import appeng.api.storage.cells.ICellProvider;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;

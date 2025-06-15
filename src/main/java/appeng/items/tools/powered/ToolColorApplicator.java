@@ -25,7 +25,7 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.implementations.items.IItemGroup;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.implementations.tiles.IColorableTile;
-import appeng.api.storage.ICellInventoryHandler;
+import appeng.api.storage.cells.ICellInventoryHandler;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;

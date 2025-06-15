@@ -20,7 +20,6 @@ package appeng.container.slot;
 
 
 import appeng.api.AEApi;
-import appeng.api.config.Upgrades;
 import appeng.api.definitions.IDefinitions;
 import appeng.api.definitions.IItems;
 import appeng.api.definitions.IMaterials;
@@ -31,7 +30,7 @@ import appeng.api.implementations.items.ISpatialStorageCell;
 import appeng.api.implementations.items.IStorageComponent;
 import appeng.api.implementations.items.IUpgradeModule;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.api.storage.ICellWorkbenchItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.util.Platform;
 import net.minecraft.entity.player.EntityPlayer;

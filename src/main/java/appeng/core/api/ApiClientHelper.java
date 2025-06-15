@@ -2,8 +2,8 @@ package appeng.core.api;
 
 
 import appeng.api.config.IncludeExclude;
-import appeng.api.storage.ICellInventory;
-import appeng.api.storage.ICellInventoryHandler;
+import appeng.api.storage.cells.ICellInventory;
+import appeng.api.storage.cells.ICellInventoryHandler;
 import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;

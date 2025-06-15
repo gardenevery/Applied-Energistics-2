@@ -20,9 +20,9 @@ package appeng.core.features.registries.cell;
 
 
 import appeng.api.AEApi;
-import appeng.api.storage.ICellHandler;
-import appeng.api.storage.ICellInventoryHandler;
-import appeng.api.storage.ISaveProvider;
+import appeng.api.storage.cells.ICellHandler;
+import appeng.api.storage.cells.ICellInventoryHandler;
+import appeng.api.storage.cells.ISaveProvider;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.items.storage.ItemCreativeStorageCell;

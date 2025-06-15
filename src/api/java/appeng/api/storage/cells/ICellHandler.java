@@ -21,9 +21,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package appeng.api.storage;
+package appeng.api.storage.cells;
 
 
+import appeng.api.storage.ICellRegistry;
+import appeng.api.storage.IStorageChannel;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.storage.data.IAEStack;

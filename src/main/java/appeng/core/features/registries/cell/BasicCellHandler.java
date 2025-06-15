@@ -20,6 +20,10 @@ package appeng.core.features.registries.cell;
 
 
 import appeng.api.storage.*;
+import appeng.api.storage.cells.ICellHandler;
+import appeng.api.storage.cells.ICellInventory;
+import appeng.api.storage.cells.ICellInventoryHandler;
+import appeng.api.storage.cells.ISaveProvider;
 import appeng.api.storage.data.IAEStack;
 import appeng.me.storage.BasicCellInventory;
 import appeng.me.storage.BasicCellInventoryHandler;

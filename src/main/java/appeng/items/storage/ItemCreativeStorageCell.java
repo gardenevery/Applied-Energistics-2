@@ -21,8 +21,8 @@ package appeng.items.storage;
 
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
-import appeng.api.storage.ICellInventoryHandler;
-import appeng.api.storage.ICellWorkbenchItem;
+import appeng.api.storage.cells.ICellInventoryHandler;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.items.AEBaseItem;
