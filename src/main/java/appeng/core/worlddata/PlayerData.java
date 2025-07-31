@@ -18,26 +18,21 @@
 
 package appeng.core.worlddata;
 
+import java.util.Map;
+import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import appeng.core.AELog;
-import appeng.core.AppEng;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.entity.player.EntityPlayer;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.storage.WorldSavedData;
-import net.minecraftforge.common.config.ConfigCategory;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
+import appeng.core.AELog;
+import appeng.core.AppEng;
 
 /**
  * Handles the matching between UUIDs and internal IDs for security systems.

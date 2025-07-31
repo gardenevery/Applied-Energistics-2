@@ -18,22 +18,20 @@
 
 package appeng.core.worlddata;
 
+import java.io.File;
+import java.util.concurrent.ThreadFactory;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import appeng.core.AEConfig;
-import appeng.services.CompassService;
-import appeng.services.compass.CompassThreadFactory;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.config.Configuration;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-
+import appeng.core.AEConfig;
+import appeng.services.CompassService;
+import appeng.services.compass.CompassThreadFactory;
 
 /**
  * Singleton access to anything related to world-based data.
