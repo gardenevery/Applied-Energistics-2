@@ -29,6 +29,7 @@ import com.google.common.collect.HashBiMap;
 import com.mojang.authlib.GameProfile;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagLongArray;
 import net.minecraft.world.storage.WorldSavedData;
 
 import appeng.core.AELog;
@@ -47,7 +48,7 @@ final class PlayerData extends WorldSavedData implements IWorldPlayerData {
 
     public static final String NAME = AppEng.MOD_ID + "_players";
     public static final String TAG_PLAYER_IDS = "playerIds";
-    private static final String PROFILE_PREFIX = "profile_";
+    public static final String TAG_PROFILE_IDS = "profileIds";
 
     private final BiMap<UUID, Integer> mapping = HashBiMap.create();
 
@@ -85,32 +86,45 @@ final class PlayerData extends WorldSavedData implements IWorldPlayerData {
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         int[] playerIds = nbt.getIntArray(TAG_PLAYER_IDS);
-        this.mapping.clear();
-
-        for (int i = 0; i < playerIds.length; i++) {
-            long most = nbt.getLong(PROFILE_PREFIX + i + "_most");
-            long least = nbt.getLong(PROFILE_PREFIX + i + "_least");
-            UUID profileId = new UUID(most, least);
-
-            mapping.put(profileId, playerIds[i]);
-            this.nextPlayerId = Math.max(playerIds[i] + 1, this.nextPlayerId);
+        long[] profileIds;
+        if (nbt.hasKey(TAG_PROFILE_IDS)) {
+            profileIds = ((NBTTagLongArray) nbt.getTag(TAG_PROFILE_IDS)).data;
+        } else {
+            profileIds = new long[0];
         }
+
+        if (playerIds.length * 2 != profileIds.length) {
+            throw new IllegalStateException("Player ID mapping is corrupted. "
+                    + playerIds.length + " player IDs vs. " + profileIds.length
+                    + " profile IDs (latter must be 2 * the former)");
+        }
+
+        this.mapping.clear();
+        int highestPlayerId = -1;
+        for (int i = 0; i < playerIds.length; i++) {
+            int playerId = playerIds[i];
+            UUID profileId = new UUID(profileIds[i * 2], profileIds[i * 2 + 1]);
+            highestPlayerId = Math.max(playerId, highestPlayerId);
+            mapping.put(profileId, playerId);
+            AELog.debug("AE player ID {} is assigned to profile ID {}", playerId, profileId);
+        }
+        this.nextPlayerId = highestPlayerId + 1;
     }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+        int index = 0;
         int[] playerIds = new int[mapping.size()];
-        int i = 0;
-
+        long[] profileIds = new long[mapping.size() * 2];
         for (Map.Entry<UUID, Integer> entry : mapping.entrySet()) {
-            UUID uuid = entry.getKey();
-            compound.setLong(PROFILE_PREFIX + i + "_most", uuid.getMostSignificantBits());
-            compound.setLong(PROFILE_PREFIX + i + "_least", uuid.getLeastSignificantBits());
-            playerIds[i] = entry.getValue();
-            i++;
+            profileIds[index * 2] = entry.getKey().getMostSignificantBits();
+            profileIds[index * 2 + 1] = entry.getKey().getLeastSignificantBits();
+            playerIds[index++] = entry.getValue();
         }
 
         compound.setIntArray(TAG_PLAYER_IDS, playerIds);
+        compound.setTag(TAG_PROFILE_IDS, new NBTTagLongArray(profileIds));
+
         return compound;
     }
 
