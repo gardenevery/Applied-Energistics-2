@@ -19,6 +19,7 @@
 package appeng.integration.modules.theoneprobe.part;
 
 
+import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.parts.IPart;
 import appeng.core.AEConfig;
 import appeng.core.features.AEFeature;
@@ -38,7 +39,7 @@ public class ChannelInfoProvider implements IPartProbInfoProvider {
 
     @Override
     public void addProbeInfo(IPart part, ProbeMode mode, IProbeInfo probeInfo, EntityPlayer player, World world, IBlockState blockState, IProbeHitData data) {
-        if (!AEConfig.instance().isFeatureEnabled(AEFeature.CHANNELS)) {
+        if (AEConfig.instance().getChannelMode() == ChannelMode.INFINITE) {
             return;
         }
         if (part instanceof PartDenseCableSmart || part instanceof PartCableSmart) {

@@ -20,6 +20,7 @@ package appeng.core;
 
 
 import appeng.api.config.*;
+import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.core.features.AEFeature;
@@ -128,6 +129,8 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     private int normalChannelCapacity = 8;
     private int denseChannelCapacity = 32;
 
+    private ChannelMode channelMode = ChannelMode.DEFAULT;
+
     private AEConfig(final File configFile) {
         super(configFile);
         this.configFile = configFile;
@@ -219,6 +222,15 @@ public final class AEConfig extends Configuration implements IConfigurableObject
             if (version.contains(imb.getVersion())) {
                 this.featureFlags.remove(AEFeature.ALPHA_PASS);
             }
+        }
+
+        try {
+            this.channelMode = ChannelMode.valueOf(
+                    this.get("general", "channels", this.channelMode.name(),
+                            "Changes the channel capacity that cables provide in AE2.").getString()
+            );
+        } catch (final Throwable t) {
+            this.channelMode = ChannelMode.DEFAULT;
         }
 
         try {
@@ -697,10 +709,37 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     }
 
     public int getNormalChannelCapacity() {
-        return this.normalChannelCapacity;
+        ChannelMode mode = getChannelMode();
+        if (mode == ChannelMode.INFINITE) {
+            return Integer.MAX_VALUE;
+        }
+        return normalChannelCapacity * mode.getCableCapacityFactor();
     }
 
     public int getDenseChannelCapacity() {
-        return this.denseChannelCapacity;
+        ChannelMode mode = getChannelMode();
+        if (mode == ChannelMode.INFINITE) {
+            return Integer.MAX_VALUE;
+        }
+        return denseChannelCapacity * mode.getCableCapacityFactor();
     }
+
+    public ChannelMode getChannelMode() {
+        return this.channelMode;
+    }
+
+    public void setChannelMode(ChannelMode mode) {
+        this.channelMode = Objects.requireNonNull(mode, "ChannelMode cannot be null");
+
+        // Update config property
+        Property prop = this.get("general", "channels", this.channelMode.name(),
+                "Changes the channel capacity that cables provide in AE2.");
+        prop.set(mode.name());
+
+        // Save config if we're in a state where we can
+        if (this.updatable) {
+            this.save();
+        }
+    }
+
 }

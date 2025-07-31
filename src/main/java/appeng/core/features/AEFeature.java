@@ -76,7 +76,6 @@ public enum AEFeature {
     SPATIAL_IO("SpatialIO", Constants.CATEGORY_NETWORK_FEATURES),
     QUANTUM_NETWORK_BRIDGE("QuantumNetworkBridge", Constants.CATEGORY_NETWORK_FEATURES),
     QUANTUM_LINKING_CARD("QuantumLinkingCard", Constants.CATEGORY_NETWORK_FEATURES),
-    CHANNELS("Channels", Constants.CATEGORY_NETWORK_FEATURES),
 
     INTERFACE("Interface", Constants.CATEGORY_NETWORK_BUSES),
     FLUID_INTERFACE("FluidInterface", Constants.CATEGORY_NETWORK_BUSES),

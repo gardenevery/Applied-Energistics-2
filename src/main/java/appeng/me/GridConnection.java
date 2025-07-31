@@ -27,6 +27,7 @@ import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.events.MENetworkChannelsChanged;
+import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.networking.pathing.IPathingGrid;
 import appeng.api.util.AEPartLocation;
 import appeng.api.util.DimensionalCoord;
@@ -124,17 +125,15 @@ public class GridConnection implements IGridConnection, IPathItem {
 
     @Override
     public IPathItem getControllerRoute() {
-        if (this.sideA.getFlags().contains(GridFlags.CANNOT_CARRY)) {
+        if (this.sideA.hasFlag(GridFlags.CANNOT_CARRY)) {
             return null;
         }
         return this.sideA;
     }
 
     @Override
-    public void setControllerRoute(final IPathItem fast, final boolean zeroOut) {
-        if (zeroOut) {
-            this.lastUsedChannels = 0;
-        }
+    public void setControllerRoute(IPathItem fast) {
+        this.lastUsedChannels = 0;
 
         if (this.sideB == fast) {
             final GridNode tmp = this.sideA;
@@ -146,7 +145,13 @@ public class GridConnection implements IGridConnection, IPathItem {
 
     @Override
     public boolean canSupportMoreChannels() {
-        return this.getLastUsedChannels() < AEConfig.instance().getDenseChannelCapacity(); // max, PERIOD.
+        var mode = sideA.getGrid().getPathingGrid().getChannelMode();
+        return this.getLastUsedChannels() < getMaxChannels();
+    }
+
+    @Override
+    public int getMaxChannels() {
+        return 32 * sideB.getGrid().getPathingGrid().getChannelMode().getCableCapacityFactor();
     }
 
     @Override
@@ -160,8 +165,8 @@ public class GridConnection implements IGridConnection, IPathItem {
     }
 
     @Override
-    public EnumSet<GridFlags> getFlags() {
-        return EnumSet.noneOf(GridFlags.class);
+    public boolean hasFlag(GridFlags flag) {
+        return false;
     }
 
     @Override

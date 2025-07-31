@@ -26,7 +26,14 @@ package appeng.api.networking;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.networking.crafting.ICraftingGrid;
+import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.events.MENetworkEvent;
+import appeng.api.networking.pathing.IPathingGrid;
+import appeng.api.networking.security.ISecurityGrid;
+import appeng.api.networking.spatial.ISpatialCache;
+import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.networking.ticking.ITickManager;
 import appeng.api.util.IReadOnlyCollection;
 
 
@@ -103,4 +110,84 @@ public interface IGrid
 	 */
 	@Nonnull
 	IGridNode getPivot();
+
+	/**
+	 * Get machine nodes on the network.
+	 *
+	 * @param machineClass class of the machine associated with a grid node
+	 * @return all nodes belonging to machines of specified class. keep in mind that machines can have multiple nodes.
+	 */
+	@Nonnull
+	Iterable<IGridNode> getMachineNodes(@Nonnull Class<?> machineClass);
+
+	/**
+	 * Get this grids {@link ITickManager}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default ITickManager getTickManager() {
+		return getCache(ITickManager.class);
+	}
+
+	/**
+	 * Get this grids {@link IStorageGrid}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default IStorageGrid getStorageGrid() {
+		return getCache(IStorageGrid.class);
+	}
+
+	/**
+	 * Get this grids {@link IEnergyGrid}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default IEnergyGrid getEnergyGrid() {
+		return getCache(IEnergyGrid.class);
+	}
+
+	/**
+	 * Get this grids {@link ICraftingGrid}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default ICraftingGrid getCraftingGrid() {
+		return getCache(ICraftingGrid.class);
+	}
+
+	/**
+	 * Get this grids {@link ISecurityGrid}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default ISecurityGrid getSecurityGrid() {
+		return getCache(ISecurityGrid.class);
+	}
+
+	/**
+	 * Get this grids {@link IPathingGrid}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default IPathingGrid getPathingGrid() {
+		return getCache(IPathingGrid.class);
+	}
+
+	/**
+	 * Get this grids {@link ISpatialCache}.
+	 *
+	 * @see #getCache(Class)
+	 */
+	@Nonnull
+	default ISpatialCache getSpatialCache() {
+		return getCache(ISpatialCache.class);
+	}
+
 }

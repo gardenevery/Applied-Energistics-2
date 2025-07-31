@@ -19,6 +19,7 @@
 package appeng.integration.modules.waila.part;
 
 
+import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.parts.IPart;
 import appeng.core.AEConfig;
 import appeng.core.features.AEFeature;
@@ -73,7 +74,7 @@ public final class ChannelWailaDataProvider extends BasePartWailaDataProvider {
      */
     @Override
     public List<String> getWailaBody(final IPart part, final List<String> currentToolTip, final IWailaDataAccessor accessor, final IWailaConfigHandler config) {
-        if (!AEConfig.instance().isFeatureEnabled(AEFeature.CHANNELS)) {
+        if (AEConfig.instance().getChannelMode() == ChannelMode.INFINITE) {
             return currentToolTip;
         }
         if (part instanceof PartCableSmart || part instanceof PartDenseCableSmart) {

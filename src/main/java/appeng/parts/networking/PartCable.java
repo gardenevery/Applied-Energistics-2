@@ -27,6 +27,7 @@ import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.parts.BusSupport;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartCollisionHelper;
@@ -261,7 +262,7 @@ public class PartCable extends AEBasePart implements IPartCable {
     public void writeToStream(final ByteBuf data) throws IOException {
         int flags = 0;
         boolean[] writeSide = new boolean[EnumFacing.values().length];
-        int[] channelsPerSide = new int[EnumFacing.values().length];
+        byte[] channelsPerSide = new byte[EnumFacing.values().length];
 
         for (EnumFacing thisSide : EnumFacing.values()) {
             final IPart part = this.getHost().getPart(thisSide);
@@ -274,7 +275,7 @@ public class PartCable extends AEBasePart implements IPartCable {
                         channels = Math.max(channels, gc.getUsedChannels());
                     }
                 }
-                channelsPerSide[thisSide.ordinal()] = channels;
+                channelsPerSide[thisSide.ordinal()] = getVisualChannels(channels);
             }
         }
 
@@ -284,7 +285,7 @@ public class PartCable extends AEBasePart implements IPartCable {
                 final AEPartLocation side = gc.getDirection(n);
                 if (side != AEPartLocation.INTERNAL) {
                     writeSide[side.ordinal()] = true;
-                    channelsPerSide[side.ordinal()] = gc.getUsedChannels();
+                    channelsPerSide[side.ordinal()] = getVisualChannels(gc.getUsedChannels());
                     flags |= (1 << side.ordinal());
                 }
             }
@@ -304,6 +305,38 @@ public class PartCable extends AEBasePart implements IPartCable {
             if (writeSide[i]) {
                 data.writeByte(channelsPerSide[i]);
             }
+        }
+    }
+
+    private byte getVisualChannels(int channels) {
+        var node = getGridNode();
+        if (node == null) {
+            return 0;
+        }
+
+        byte visualMaxChannels = switch (getCableConnectionType()) {
+            case NONE -> 0;
+            case GLASS, SMART, COVERED -> 8;
+            case DENSE_COVERED, DENSE_SMART -> 32;
+        };
+
+        // In infinite mode, we either return 0 or full strength
+        if (node.getGrid().getPathingGrid().getChannelMode() == ChannelMode.INFINITE) {
+            return channels <= 0 ? 0 : visualMaxChannels;
+        }
+
+        int gridMaxChannels = node.getMaxChannels();
+        if (visualMaxChannels == 0 || gridMaxChannels == 0) {
+            return 0;
+        }
+
+        // Generally we round down here
+        var result = (byte) (Math.min(visualMaxChannels, channels * visualMaxChannels / gridMaxChannels));
+        // Except if at least 1 channel is used
+        if (result == 0 && channels > 0) {
+            return 1;
+        } else {
+            return result;
         }
     }
 

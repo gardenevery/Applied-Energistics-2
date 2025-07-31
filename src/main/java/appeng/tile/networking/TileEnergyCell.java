@@ -37,8 +37,10 @@ import net.minecraft.nbt.NBTTagCompound;
 
 public class TileEnergyCell extends AENetworkTile implements IAEPowerStorage {
 
+    private static final double MAX_STORED = 200000.0;
+
     private double internalCurrentPower = 0.0;
-    private double internalMaxPower = 200000.0;
+    private double internalMaxPower = MAX_STORED;
 
     private byte currentMeta = -1;
 
@@ -177,6 +179,11 @@ public class TileEnergyCell extends AENetworkTile implements IAEPowerStorage {
         return pm.divide(this.extractAEPower(pm.multiply(amt), mode));
     }
 
+    @Override
+    public int getPriority() {
+        return 200;
+    }
+
     private double extractAEPower(double amt, final Actionable mode) {
         if (mode == Actionable.SIMULATE) {
             if (this.internalCurrentPower > amt) {
@@ -216,4 +223,5 @@ public class TileEnergyCell extends AENetworkTile implements IAEPowerStorage {
     void setInternalMaxPower(final double internalMaxPower) {
         this.internalMaxPower = internalMaxPower;
     }
+
 }

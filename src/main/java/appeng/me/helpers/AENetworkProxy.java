@@ -252,8 +252,8 @@ public class AENetworkProxy implements IGridBlock {
     }
 
     @Override
-    public EnumSet<GridFlags> getFlags() {
-        return this.flags;
+    public boolean hasFlag(final GridFlags flag) {
+        return this.flags.contains(flag);
     }
 
     @Override

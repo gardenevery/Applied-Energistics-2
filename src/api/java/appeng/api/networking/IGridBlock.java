@@ -55,13 +55,7 @@ public interface IGridBlock
 	@Nonnegative
 	double getIdlePowerUsage();
 
-	/**
-	 * Various flags that AE uses to modify basic behavior for various parts of the network.
-	 *
-	 * @return Set of flags for this IGridBlock
-	 */
-	@Nonnull
-	EnumSet<GridFlags> getFlags();
+	boolean hasFlag(GridFlags flag);
 
 	/**
 	 * Generally speaking you will return true for this, the one exception is buses, or worm holes where the node

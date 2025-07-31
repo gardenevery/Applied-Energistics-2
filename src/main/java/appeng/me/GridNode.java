@@ -18,37 +18,40 @@
 
 package appeng.me;
 
+import java.util.*;
 
-import appeng.api.exceptions.FailedConnectionException;
-import appeng.api.exceptions.SecurityConnectionException;
-import appeng.api.networking.*;
-import appeng.api.networking.energy.IEnergyGrid;
-import appeng.api.networking.events.MENetworkChannelsChanged;
-import appeng.api.networking.pathing.IPathingGrid;
-import appeng.api.util.AEColor;
-import appeng.api.util.AEPartLocation;
-import appeng.api.util.DimensionalCoord;
-import appeng.api.util.IReadOnlyCollection;
-import appeng.core.AEConfig;
-import appeng.core.AELog;
-import appeng.core.features.AEFeature;
-import appeng.core.worlddata.WorldData;
-import appeng.hooks.TickHandler;
-import appeng.me.pathfinding.IPathItem;
-import appeng.util.IWorldCallable;
-import appeng.util.ReadOnlyCollection;
+import com.google.common.collect.ClassToInstanceMap;
+
+import com.google.common.collect.MutableClassToInstanceMap;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-import java.util.*;
+import appeng.api.exceptions.FailedConnectionException;
+import appeng.api.exceptions.SecurityConnectionException;
+import appeng.api.networking.*;
+import appeng.api.networking.energy.IEnergyGrid;
+import appeng.api.networking.events.MENetworkChannelsChanged;
+import appeng.api.networking.pathing.ChannelMode;
+import appeng.api.networking.pathing.IPathingGrid;
+import appeng.api.util.AEColor;
+import appeng.api.util.AEPartLocation;
+import appeng.api.util.DimensionalCoord;
+import appeng.api.util.IReadOnlyCollection;
+import appeng.core.AELog;
+import appeng.core.worlddata.WorldData;
+import appeng.hooks.TickHandler;
+import appeng.me.pathfinding.IPathItem;
+import appeng.util.IWorldCallable;
+import appeng.util.ReadOnlyCollection;
 
+import javax.annotation.Nullable;
 
 public class GridNode implements IGridNode, IPathItem {
     private static final MENetworkChannelsChanged EVENT = new MENetworkChannelsChanged();
-    private static final int[] CHANNEL_COUNT = {0, AEConfig.instance().getNormalChannelCapacity(), AEConfig.instance().getDenseChannelCapacity()};
+    private static final int[] CHANNEL_COUNT = { 0, 8, 32 };
 
     private final List<IGridConnection> connections = new ArrayList<>();
     private final IGridBlock gridProxy;
@@ -63,6 +66,8 @@ public class GridNode implements IGridNode, IPathItem {
     private int compressedData = 0;
     private int usedChannels = 0;
     private int lastUsedChannels = 0;
+
+    private ClassToInstanceMap<IGridMultiblock> services = null;
 
     public GridNode(final IGridBlock what) {
         this.gridProxy = what;
@@ -167,9 +172,11 @@ public class GridNode implements IGridNode, IPathItem {
 
     @Override
     public void updateState() {
-        final EnumSet<GridFlags> set = this.gridProxy.getFlags();
-
-        this.compressedData = set.contains(GridFlags.CANNOT_CARRY) ? 0 : (set.contains(GridFlags.DENSE_CAPACITY) ? 2 : 1);
+        int channelType = 0;
+        if (!hasFlag(GridFlags.CANNOT_CARRY)) {
+            channelType = hasFlag(GridFlags.DENSE_CAPACITY) ? 2 : 1;
+        }
+        this.compressedData = channelType;
 
         this.compressedData |= (this.gridProxy.getGridColor().ordinal() << 3);
 
@@ -303,17 +310,12 @@ public class GridNode implements IGridNode, IPathItem {
 
     @Override
     public boolean meetsChannelRequirements() {
-        if (this.gridProxy.getFlags().contains(GridFlags.REQUIRE_CHANNEL)) {
-            if (AEConfig.instance().isFeatureEnabled(AEFeature.CHANNELS)) {
-                return this.getUsedChannels() > 0;
-            }
-        }
-        return true;
+        return !hasFlag(GridFlags.REQUIRE_CHANNEL) || this.getUsedChannels() > 0;
     }
 
     @Override
     public boolean hasFlag(final GridFlags flag) {
-        return this.gridProxy.getFlags().contains(flag);
+        return this.gridProxy.hasFlag(flag);
     }
 
     @Override
@@ -328,7 +330,7 @@ public class GridNode implements IGridNode, IPathItem {
         }
     }
 
-    private int getUsedChannels() {
+    public int getUsedChannels() {
         return this.usedChannels;
     }
 
@@ -495,7 +497,7 @@ public class GridNode implements IGridNode, IPathItem {
 
     @Override
     public IPathItem getControllerRoute() {
-        if (this.connections.isEmpty() || this.getFlags().contains(GridFlags.CANNOT_CARRY)) {
+        if (this.connections.isEmpty() || hasFlag(GridFlags.CANNOT_CARRY)) {
             return null;
         }
 
@@ -503,10 +505,8 @@ public class GridNode implements IGridNode, IPathItem {
     }
 
     @Override
-    public void setControllerRoute(final IPathItem fast, final boolean zeroOut) {
-        if (zeroOut) {
-            this.usedChannels = 0;
-        }
+    public void setControllerRoute(final IPathItem fast) {
+        this.usedChannels = 0;
 
         final int idx = this.connections.indexOf((IGridConnection) fast);
         if (idx > 0) {
@@ -520,8 +520,18 @@ public class GridNode implements IGridNode, IPathItem {
         return this.getUsedChannels() < this.getMaxChannels();
     }
 
-    private int getMaxChannels() {
-        return CHANNEL_COUNT[this.compressedData & 0x03];
+    @Override
+    public int getMaxChannels() {
+        if (hasFlag(GridFlags.CANNOT_CARRY)) {
+            return 0;
+        }
+
+        var channelMode = myGrid.getPathingGrid().getChannelMode();
+        if (!hasFlag(GridFlags.DENSE_CAPACITY)) {
+            return 8 * channelMode.getCableCapacityFactor();
+        } else {
+            return 32 * channelMode.getCableCapacityFactor();
+        }
     }
 
     @Override
@@ -535,23 +545,24 @@ public class GridNode implements IGridNode, IPathItem {
     }
 
     @Override
-    public EnumSet<GridFlags> getFlags() {
-        return this.gridProxy.getFlags();
-    }
-
-    @Override
     public void finalizeChannels() {
-        if (this.getFlags().contains(GridFlags.CANNOT_CARRY)) {
+        if (hasFlag(GridFlags.CANNOT_CARRY)) {
             return;
         }
 
-        if (this.lastUsedChannels != this.usedChannels) {
+        if (this.lastUsedChannels != this.getUsedChannels()) {
             this.lastUsedChannels = this.usedChannels;
 
             if (this.getInternalGrid() != null) {
                 this.getInternalGrid().postEventTo(this, EVENT);
             }
         }
+    }
+
+    @Nullable
+    @Override
+    public <T extends IGridMultiblock> T getService(Class<T> serviceClass) {
+        return services != null ? services.getInstance(serviceClass) : null;
     }
 
     public long getLastSecurityKey() {
