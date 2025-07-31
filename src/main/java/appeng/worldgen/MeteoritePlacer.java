@@ -214,7 +214,7 @@ public final class MeteoritePlacer {
                         duplicate = false;
 
                         if (Math.random() > PRESSES_SPAWN_CHANCE) {
-                            r = WorldData.instance().storageData().getNextOrderedValue("presses");
+                            r = WorldData.instance().storageData().getNextOrderedValue("presses", 0);
                         } else {
                             r = (int) (Math.random() * 1000);
                         }

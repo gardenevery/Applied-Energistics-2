@@ -19,16 +19,22 @@
 package appeng.core.worlddata;
 
 
+import appeng.core.AELog;
 import appeng.core.AppEng;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,83 +48,75 @@ import java.util.UUID;
  * @version rv3 - 30.05.2015
  * @since rv3 30.05.2015
  */
-final class PlayerData implements IWorldPlayerData, IOnWorldStartable, IOnWorldStoppable {
-    private static final String LAST_PLAYER_CATEGORY = "Counters";
-    private static final String LAST_PLAYER_KEY = "lastPlayer";
-    private static final int LAST_PLAYER_DEFAULT = 0;
+final class PlayerData extends WorldSavedData implements IWorldPlayerData {
 
-    private final Configuration config;
-    private final IWorldPlayerMapping playerMapping;
+    public static final String NAME = AppEng.MOD_ID + "_players";
+    public static final String TAG_PLAYER_IDS = "playerIds";
+    private static final String PROFILE_PREFIX = "profile_";
 
-    private int lastPlayerID;
+    private final BiMap<UUID, Integer> mapping = HashBiMap.create();
 
-    public PlayerData(@Nonnull final Configuration configFile) {
-        Preconditions.checkNotNull(configFile);
+    // Caches the highest assigned player id + 1
+    private int nextPlayerId = 0;
 
-        this.config = configFile;
-
-        final ConfigCategory playerList = this.config.getCategory("players");
-        this.playerMapping = new PlayerMapping(playerList);
+    public PlayerData() {
+        super(NAME);
     }
 
     @Nullable
     @Override
-    public EntityPlayer getPlayerFromID(final int playerID) {
-        final Optional<UUID> maybe = this.playerMapping.get(playerID);
-
-        if (maybe.isPresent()) {
-            final UUID uuid = maybe.get();
-            for (final EntityPlayer player : AppEng.proxy.getPlayers()) {
-                if (player.getUniqueID().equals(uuid)) {
-                    return player;
-                }
-            }
-        }
-
-        return null;
+    public UUID getProfileId(final int playerId) {
+        return this.mapping.inverse().get(playerId);
     }
 
     @Override
-    public int getPlayerID(@Nonnull final GameProfile profile) {
+    public int getMePlayerId(@Nonnull final GameProfile profile) {
         Preconditions.checkNotNull(profile);
-        Preconditions.checkNotNull(this.config.getCategory("players"));
-        Preconditions.checkState(profile.isComplete());
 
-        final ConfigCategory players = this.config.getCategory("players");
-        final String uuid = profile.getId().toString();
-        final Property maybePlayerID = players.get(uuid);
+        final UUID uuid = profile.getId();
+        Integer playerId = mapping.get(uuid);
 
-        if (maybePlayerID != null && maybePlayerID.isIntValue()) {
-            return maybePlayerID.getInt();
-        } else {
-            final int newPlayerID = this.nextPlayer();
-            final Property newPlayer = new Property(uuid, String.valueOf(newPlayerID), Property.Type.INTEGER);
-            players.put(uuid, newPlayer);
-            this.playerMapping.put(newPlayerID, profile.getId()); // add to reverse map
-            this.config.save();
+        if (playerId == null) {
+            playerId = this.nextPlayerId++;
+            this.mapping.put(profile.getId(), playerId);
+            markDirty();
 
-            return newPlayerID;
+            AELog.info("Assigning ME player id {} to Minecraft profile {} ({})", playerId, profile.getId(), profile.getName());
+        }
+
+        return playerId;
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound nbt) {
+        int[] playerIds = nbt.getIntArray(TAG_PLAYER_IDS);
+        this.mapping.clear();
+
+        for (int i = 0; i < playerIds.length; i++) {
+            long most = nbt.getLong(PROFILE_PREFIX + i + "_most");
+            long least = nbt.getLong(PROFILE_PREFIX + i + "_least");
+            UUID profileId = new UUID(most, least);
+
+            mapping.put(profileId, playerIds[i]);
+            this.nextPlayerId = Math.max(playerIds[i] + 1, this.nextPlayerId);
         }
     }
 
-    private int nextPlayer() {
-        final int r = this.lastPlayerID;
-        this.lastPlayerID++;
-        this.config.get(LAST_PLAYER_CATEGORY, LAST_PLAYER_KEY, this.lastPlayerID).set(this.lastPlayerID);
-        return r;
-    }
-
     @Override
-    public void onWorldStart() {
-        this.lastPlayerID = this.config.get(LAST_PLAYER_CATEGORY, LAST_PLAYER_KEY, LAST_PLAYER_DEFAULT).getInt(LAST_PLAYER_DEFAULT);
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+        int[] playerIds = new int[mapping.size()];
+        int i = 0;
 
-        this.config.save();
+        for (Map.Entry<UUID, Integer> entry : mapping.entrySet()) {
+            UUID uuid = entry.getKey();
+            compound.setLong(PROFILE_PREFIX + i + "_most", uuid.getMostSignificantBits());
+            compound.setLong(PROFILE_PREFIX + i + "_least", uuid.getLeastSignificantBits());
+            playerIds[i] = entry.getValue();
+            i++;
+        }
+
+        compound.setIntArray(TAG_PLAYER_IDS, playerIds);
+        return compound;
     }
 
-    @Override
-    public void onWorldStop() {
-        this.config.save();
-
-        this.lastPlayerID = 0;
-    }
 }
