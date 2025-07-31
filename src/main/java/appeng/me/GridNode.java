@@ -526,6 +526,10 @@ public class GridNode implements IGridNode, IPathItem {
         }
 
         var channelMode = myGrid.getPathingGrid().getChannelMode();
+        if (channelMode == ChannelMode.INFINITE) {
+            return Integer.MAX_VALUE;
+        }
+
         if (!hasFlag(GridFlags.DENSE_CAPACITY)) {
             return 8 * channelMode.getCableCapacityFactor();
         } else {

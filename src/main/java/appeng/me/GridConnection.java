@@ -145,13 +145,16 @@ public class GridConnection implements IGridConnection, IPathItem {
 
     @Override
     public boolean canSupportMoreChannels() {
-        var mode = sideA.getGrid().getPathingGrid().getChannelMode();
         return this.getLastUsedChannels() < getMaxChannels();
     }
 
     @Override
     public int getMaxChannels() {
-        return 32 * sideB.getGrid().getPathingGrid().getChannelMode().getCableCapacityFactor();
+        var mode = sideB.getGrid().getPathingGrid().getChannelMode();
+        if (mode == ChannelMode.INFINITE) {
+            return Integer.MAX_VALUE;
+        }
+        return 32 * mode.getCableCapacityFactor();
     }
 
     @Override

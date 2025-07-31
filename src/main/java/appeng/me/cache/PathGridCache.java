@@ -40,7 +40,10 @@ import appeng.core.stats.IAdvancementTrigger;
 import appeng.me.pathfinding.*;
 import appeng.tile.networking.TileController;
 
+import javax.annotation.Nullable;
+
 public class PathGridCache implements IPathingGrid {
+    private static final String TAG_CHANNEL_MODE = "channelMode";
 
     private PathingCalculation ongoingCalculation = null;
     private final Set<TileController> controllers = new HashSet<>();
@@ -56,6 +59,11 @@ public class PathGridCache implements IPathingGrid {
     private ControllerState controllerState = ControllerState.NO_CONTROLLER;
     private int ticksUntilReady = 5;
     private int lastChannels = 0;
+    /**
+     * This can be used for testing to set a specific channel mode on this grid that will not be overwritten by
+     * repathing.
+     */
+    private boolean channelModeLocked;
     private ChannelMode channelMode = AEConfig.instance().getChannelMode();
 
     public PathGridCache(final IGrid g) {
@@ -170,21 +178,6 @@ public class PathGridCache implements IPathingGrid {
         }
 
         this.repath();
-    }
-
-    @Override
-    public void onSplit(final IGridStorage storageB) {
-
-    }
-
-    @Override
-    public void onJoin(final IGridStorage storageB) {
-
-    }
-
-    @Override
-    public void populateGridStorage(final IGridStorage storage) {
-
     }
 
     private void recalcController() {
@@ -306,7 +299,9 @@ public class PathGridCache implements IPathingGrid {
 
     @Override
     public void repath() {
-        this.channelMode = AEConfig.instance().getChannelMode();
+        if (!this.channelModeLocked) {
+            this.channelMode = AEConfig.instance().getChannelMode();
+        }
 
         // clean up...
         this.ongoingCalculation = null;
@@ -325,5 +320,47 @@ public class PathGridCache implements IPathingGrid {
 
     public ChannelMode getChannelMode() {
         return channelMode;
+    }
+
+    public void setForcedChannelMode(@Nullable ChannelMode forcedChannelMode) {
+        if (forcedChannelMode == null) {
+            if (this.channelModeLocked) {
+                this.channelModeLocked = false;
+                repath();
+            }
+        } else {
+            this.channelModeLocked = true;
+            if (this.channelMode != forcedChannelMode) {
+                this.channelMode = forcedChannelMode;
+                this.repath();
+            }
+        }
+    }
+
+    @Override
+    public void onSplit(IGridStorage destinationStorage) {
+        populateGridStorage(destinationStorage);
+    }
+
+    @Override
+    public void onJoin(IGridStorage sourceStorage) {
+        var tag = sourceStorage.dataObject();
+        var channelModeName = tag.getString(TAG_CHANNEL_MODE);
+        try {
+            channelMode = ChannelMode.valueOf(channelModeName);
+            channelModeLocked = true;
+        } catch (IllegalArgumentException ignored) {
+            channelModeLocked = false;
+        }
+    }
+
+    @Override
+    public void populateGridStorage(IGridStorage destinationStorage) {
+        var tag = destinationStorage.dataObject();
+        if (channelModeLocked) {
+            tag.setString(TAG_CHANNEL_MODE, channelMode.name());
+        } else {
+            tag.removeTag(TAG_CHANNEL_MODE);
+        }
     }
 }
