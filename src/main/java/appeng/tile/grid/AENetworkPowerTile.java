@@ -81,13 +81,13 @@ public abstract class AENetworkPowerTile extends AEBasePoweredTile implements IA
     @Override
     public void invalidate() {
         super.invalidate();
-        this.getProxy().invalidate();
+        this.getProxy().remove();
     }
 
     @Override
     public void onChunkUnload() {
         super.onChunkUnload();
-        this.getProxy().onChunkUnload();
+        this.getProxy().onChunkUnloaded();
     }
 
     @Override

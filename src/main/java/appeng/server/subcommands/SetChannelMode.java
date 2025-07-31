@@ -55,7 +55,7 @@ public class SetChannelMode implements ISubCommand {
         AEConfig.instance().save();
 
         int gridCount = 0;
-        for (Grid grid : TickHandler.INSTANCE.getGridList()) {
+        for (Grid grid : TickHandler.instance().getGridList()) {
             grid.getPathingGrid().repath();
             gridCount++;
         }

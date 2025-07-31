@@ -248,7 +248,7 @@ public abstract class AEBasePart implements IPart, IGridProxyable, IActionHost, 
 
     @Override
     public void removeFromWorld() {
-        this.proxy.invalidate();
+        this.proxy.remove();
     }
 
     @Override

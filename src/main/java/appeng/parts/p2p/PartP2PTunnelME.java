@@ -100,7 +100,7 @@ public class PartP2PTunnelME extends PartP2PTunnel<PartP2PTunnelME> implements I
     @Override
     public void removeFromWorld() {
         super.removeFromWorld();
-        this.outerProxy.invalidate();
+        this.outerProxy.remove();
     }
 
     @Override
@@ -138,14 +138,14 @@ public class PartP2PTunnelME extends PartP2PTunnel<PartP2PTunnelME> implements I
             if (!this.getProxy().getPath().isNetworkBooting()) {
                 if (!this.getProxy().getEnergy().isNetworkPowered()) {
                     this.connection.markDestroy();
-                    TickHandler.INSTANCE.addCallable(this.getTile().getWorld(), this.connection);
+                    TickHandler.instance().addCallable(this.getTile().getWorld(), this.connection);
                 } else {
                     if (this.getProxy().isActive()) {
                         this.connection.markCreate();
-                        TickHandler.INSTANCE.addCallable(this.getTile().getWorld(), this.connection);
+                        TickHandler.instance().addCallable(this.getTile().getWorld(), this.connection);
                     } else {
                         this.connection.markDestroy();
-                        TickHandler.INSTANCE.addCallable(this.getTile().getWorld(), this.connection);
+                        TickHandler.instance().addCallable(this.getTile().getWorld(), this.connection);
                     }
                 }
 

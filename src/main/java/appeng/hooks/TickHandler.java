@@ -18,24 +18,14 @@
 
 package appeng.hooks;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-import appeng.api.AEApi;
-import appeng.api.networking.IGridNode;
-import appeng.api.parts.CableRenderMode;
-import appeng.api.util.AEColor;
-import appeng.core.AEConfig;
-import appeng.core.AELog;
-import appeng.core.AppEng;
-import appeng.core.sync.packets.PacketPaintedEntity;
-import appeng.crafting.CraftingJob;
-import appeng.me.Grid;
-import appeng.tile.AEBaseTile;
-import appeng.util.IWorldCallable;
-import appeng.util.Platform;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
+
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -44,13 +34,23 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Type;
 import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
+import appeng.api.AEApi;
+import appeng.api.networking.IGridNode;
+import appeng.api.parts.CableRenderMode;
+import appeng.api.util.AEColor;
+import appeng.core.sync.packets.PacketPaintedEntity;
+import appeng.core.AEConfig;
+import appeng.core.AELog;
+import appeng.core.AppEng;
+import appeng.crafting.CraftingJob;
+import appeng.me.Grid;
+import appeng.tile.AEBaseTile;
+import appeng.util.IWorldCallable;
+import appeng.util.Platform;
 
 public class TickHandler {
 
-    public static final TickHandler INSTANCE = new TickHandler();
+    private static final TickHandler INSTANCE = new TickHandler();
     private final Queue<IWorldCallable<?>> serverQueue = new ArrayDeque<>();
     private final Multimap<World, CraftingJob> craftingJobs = LinkedListMultimap.create();
     private final WeakHashMap<World, Queue<IWorldCallable<?>>> callQueue = new WeakHashMap<>();
@@ -59,6 +59,10 @@ public class TickHandler {
     private final HashMap<Integer, PlayerColor> cliPlayerColors = new HashMap<>();
     private final HashMap<Integer, PlayerColor> srvPlayerColors = new HashMap<>();
     private CableRenderMode crm = CableRenderMode.STANDARD;
+
+    public static TickHandler instance() {
+        return INSTANCE;
+    }
 
     public HashMap<Integer, PlayerColor> getPlayerColors() {
         if (Platform.isServer()) {
@@ -96,8 +100,8 @@ public class TickHandler {
     }
 
     public void addInit(final AEBaseTile tile) {
-        if (Platform.isServer()) // for no there is no reason to care about this on the client...
-        {
+        // for no there is no reason to care about this on the client...
+        if (Platform.isServer()) {
             this.getRepo().tiles.add(tile);
         }
     }
@@ -110,15 +114,15 @@ public class TickHandler {
     }
 
     public void addNetwork(final Grid grid) {
-        if (Platform.isServer()) // for no there is no reason to care about this on the client...
-        {
+        // for no there is no reason to care about this on the client...
+        if (Platform.isServer()) {
             this.getRepo().addNetwork(grid);
         }
     }
 
     public void removeNetwork(final Grid grid) {
-        if (Platform.isServer()) // for no there is no reason to care about this on the client...
-        {
+        // for no there is no reason to care about this on the client...
+        if (Platform.isServer()) {
             this.getRepo().removeNetwork(grid);
         }
     }
@@ -133,8 +137,8 @@ public class TickHandler {
 
     @SubscribeEvent
     public void unloadWorld(final WorldEvent.Unload ev) {
-        if (Platform.isServer()) // for no there is no reason to care about this on the client...
-        {
+        // for no there is no reason to care about this on the client...
+        if (Platform.isServer()) {
             final List<IGridNode> toDestroy = new ArrayList<>();
 
             this.getRepo().updateNetworks();
@@ -295,4 +299,5 @@ public class TickHandler {
             return new PacketPaintedEntity(this.myEntity, this.myColor, this.ticksLeft);
         }
     }
+
 }

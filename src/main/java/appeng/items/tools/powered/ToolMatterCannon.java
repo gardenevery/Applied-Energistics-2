@@ -226,7 +226,7 @@ public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<
             if (pos.typeOfHit == RayTraceResult.Type.ENTITY) {
                 final int id = pos.entityHit.getEntityId();
                 final PlayerColor marker = new PlayerColor(id, col, 20 * 30);
-                TickHandler.INSTANCE.getPlayerColors().put(id, marker);
+                TickHandler.instance().getPlayerColors().put(id, marker);
 
                 if (pos.entityHit instanceof EntitySheep) {
                     final EntitySheep sh = (EntitySheep) pos.entityHit;

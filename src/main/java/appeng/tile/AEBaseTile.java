@@ -442,7 +442,7 @@ public class AEBaseTile extends TileEntity implements IOrientable, ICommonTile, 
         // Serverside is only queued once per tick to avoid costly operations
         this.world.markChunkDirty(this.pos, this);
         if (!this.markDirtyQueued) {
-            TickHandler.INSTANCE.addCallable(null, this::markDirtyAtEndOfTick);
+            TickHandler.instance().addCallable(null, this::markDirtyAtEndOfTick);
             this.markDirtyQueued = true;
         }
     }

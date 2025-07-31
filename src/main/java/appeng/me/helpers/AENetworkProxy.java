@@ -90,21 +90,31 @@ public class AENetworkProxy implements IGridBlock {
 
     public void validate() {
         if (this.gp instanceof AEBaseTile) {
-            TickHandler.INSTANCE.addInit((AEBaseTile) this.gp);
+            TickHandler.instance().addInit((AEBaseTile) this.gp);
         }
     }
 
-    public void onChunkUnload() {
+    public void onChunkUnloaded() {
         this.isReady = false;
-        this.invalidate();
+        this.remove();
     }
 
-    public void invalidate() {
+    public void remove() {
         this.isReady = false;
         if (this.node != null) {
             this.node.destroy();
             this.node = null;
         }
+    }
+
+    @Deprecated
+    public void onChunkUnload() {
+        this.onChunkUnloaded();
+    }
+
+    @Deprecated
+    public void invalidate() {
+        this.remove();
     }
 
     public void onReady() {
