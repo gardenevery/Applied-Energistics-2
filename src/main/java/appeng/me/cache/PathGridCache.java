@@ -130,8 +130,16 @@ public class PathGridCache implements IPathingGrid {
             final Iterator<PathSegment> i = this.active.iterator();
             while (i.hasNext()) {
                 final PathSegment pat = i.next();
-                if (pat.step()) {
-                    pat.setDead(true);
+                int steps = 0;
+                boolean done = false;
+                while (steps < 4 && !done) {
+                    done = pat.step();
+                    if (done) {
+                        pat.setDead(true);
+                    }
+                    steps++;
+                }
+                if (done) {
                     i.remove();
                 }
             }
