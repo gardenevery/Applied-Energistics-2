@@ -31,7 +31,7 @@ import java.io.File;
  * @version rv3 - 30.05.2015
  * @since rv3 30.05.2015
  */
-final class CompassData implements IWorldCompassData {
+final class CompassData implements IWorldCompassData, IOnWorldStoppable {
     @Nonnull
     private final CompassService service;
 
@@ -47,4 +47,8 @@ final class CompassData implements IWorldCompassData {
         return this.service;
     }
 
+    @Override
+    public void onWorldStop() {
+        this.service.kill();
+    }
 }

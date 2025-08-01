@@ -129,7 +129,7 @@ public class TileCableBus extends AEBaseTile implements AEMultiTile, ICustomColl
     @Override
     public void validate() {
         super.validate();
-        TickHandler.instance().addInit(this);
+        TickHandler.INSTANCE.addInit(this);
     }
 
     @Override

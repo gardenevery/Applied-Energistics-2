@@ -18,11 +18,6 @@
 
 package appeng.me.cache;
 
-import java.util.*;
-
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-
 import appeng.api.AEApi;
 import appeng.api.networking.*;
 import appeng.api.networking.events.MENetworkBootingStatusChange;
@@ -36,29 +31,35 @@ import appeng.api.util.AEPartLocation;
 import appeng.api.util.DimensionalCoord;
 import appeng.core.AEConfig;
 import appeng.core.AppEng;
+import appeng.core.features.AEFeature;
 import appeng.core.stats.IAdvancementTrigger;
+import appeng.me.GridConnection;
+import appeng.me.GridNode;
 import appeng.me.pathfinding.*;
 import appeng.tile.networking.TileController;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 
-import javax.annotation.Nullable;
+import java.util.*;
 
 public class PathGridCache implements IPathingGrid {
     private static final String TAG_CHANNEL_MODE = "channelMode";
 
-    private PathingCalculation ongoingCalculation = null;
+    private final List<PathSegment> active = new ArrayList<>();
     private final Set<TileController> controllers = new HashSet<>();
-    private final Set<IGridNode> nodesNeedingChannels = new HashSet<>();
-    private final Set<IGridNode> cannotCarryCompressedNodes = new HashSet<>();
+    private final Set<IGridNode> requireChannels = new HashSet<>();
+    private final Set<IGridNode> blockDense = new HashSet<>();
     private final IGrid myGrid;
     private int channelsInUse = 0;
     private int channelsByBlocks = 0;
     private double channelPowerUsage = 0.0;
     private boolean recalculateControllerNextTick = true;
-    private boolean reboot = true;
+    private boolean updateNetwork = true;
     private boolean booting = false;
     private ControllerState controllerState = ControllerState.NO_CONTROLLER;
     private int ticksUntilReady = 5;
     private int lastChannels = 0;
+    private HashSet<IPathItem> semiOpen = new HashSet<>();
     /**
      * This can be used for testing to set a specific channel mode on this grid that will not be overwritten by
      * repathing.
@@ -76,28 +77,29 @@ public class PathGridCache implements IPathingGrid {
             this.recalcController();
         }
 
-        if (this.reboot) {
+        if (this.updateNetwork) {
             if (!this.booting) {
                 this.myGrid.postEvent(new MENetworkBootingStatusChange());
             }
 
             this.booting = true;
-            this.reboot = false;
-            this.channelsInUse = 0;
+            this.updateNetwork = false;
+            this.setChannelsInUse(0);
 
             if (this.controllerState == ControllerState.NO_CONTROLLER) {
-                var requiredChannels = this.calculateAdHocChannels();
+                final int requiredChannels = this.calculateRequiredChannels();
                 int used = requiredChannels;
-                if (requiredChannels > channelMode.getAdHocNetworkChannels()) {
+                if (AEConfig.instance().getChannelMode() != ChannelMode.INFINITE
+                        && requiredChannels > AEConfig.instance().getNormalChannelCapacity()) {
                     used = 0;
                 }
 
-                this.channelsInUse = used;
+                final int nodes = this.myGrid.getNodes().size();
+                this.setChannelsInUse(used);
 
-                var nodes = this.myGrid.getNodes().size();
                 this.ticksUntilReady = Math.max(5, nodes / 100);
-                this.channelsByBlocks = nodes * used;
-                this.setChannelPowerUsage(this.channelsByBlocks / 128.0);
+                this.setChannelsByBlocks(nodes * used);
+                this.setChannelPowerUsage(this.getChannelsByBlocks() / 128.0);
 
                 this.myGrid.getPivot().beginVisit(new AdHocChannelUpdater(used));
             } else if (this.controllerState == ControllerState.CONTROLLER_CONFLICT) {
@@ -106,26 +108,40 @@ public class PathGridCache implements IPathingGrid {
             } else {
                 final int nodes = this.myGrid.getNodes().size();
                 this.ticksUntilReady = Math.max(5, nodes / 100);
-                this.ongoingCalculation = new PathingCalculation(myGrid);
+                final HashSet<IPathItem> closedList = new HashSet<>();
+                this.semiOpen = new HashSet<>();
+
+                // myGrid.getPivot().beginVisit( new AdHocChannelUpdater( 0 )
+                // );
+                for (final IGridNode node : this.myGrid.getMachines(TileController.class)) {
+                    closedList.add((IPathItem) node);
+                    for (final IGridConnection gcc : node.getConnections()) {
+                        final GridConnection gc = (GridConnection) gcc;
+                        if (!(gc.getOtherSide(node).getMachine() instanceof TileController)) {
+                            final List<IPathItem> open = new ArrayList<>();
+                            closedList.add(gc);
+                            open.add(gc);
+                            gc.setControllerRoute((GridNode) node, true);
+                            this.active.add(new PathSegment(this, open, this.semiOpen, closedList));
+                        }
+                    }
+                }
             }
         }
 
-        if (this.ticksUntilReady > 0) {
-            if (ongoingCalculation != null) {// can be null for ad-hoc or invalid controller state
-                for (var i = 0; i < 4; i++) {
-                    ongoingCalculation.step();
-                    if (ongoingCalculation.isFinished()) {
-                        this.channelsByBlocks = ongoingCalculation.getChannelsByBlocks();
-                        this.channelsInUse = ongoingCalculation.getChannelsInUse();
-                        ongoingCalculation = null;
-                        break;
-                    }
+        if (!this.active.isEmpty() || this.ticksUntilReady > 0) {
+            final Iterator<PathSegment> i = this.active.iterator();
+            while (i.hasNext()) {
+                final PathSegment pat = i.next();
+                if (pat.step()) {
+                    pat.setDead(true);
+                    i.remove();
                 }
             }
 
             this.ticksUntilReady--;
 
-            if (ongoingCalculation == null && ticksUntilReady <= 0) {
+            if (this.active.isEmpty() && this.ticksUntilReady <= 0) {
                 if (this.controllerState == ControllerState.CONTROLLER_ONLINE) {
                     final Iterator<TileController> controllerIterator = this.controllers.iterator();
                     if (controllerIterator.hasNext()) {
@@ -138,7 +154,7 @@ public class PathGridCache implements IPathingGrid {
                 this.achievementPost();
 
                 this.booting = false;
-                this.setChannelPowerUsage(this.channelsByBlocks / 128.0);
+                this.setChannelPowerUsage(this.getChannelsByBlocks() / 128.0);
                 this.myGrid.postEvent(new MENetworkBootingStatusChange());
             }
         }
@@ -152,11 +168,11 @@ public class PathGridCache implements IPathingGrid {
         }
 
         if (gridNode.hasFlag(GridFlags.REQUIRE_CHANNEL)) {
-            this.nodesNeedingChannels.remove(gridNode);
+            this.requireChannels.remove(gridNode);
         }
 
         if (gridNode.hasFlag(GridFlags.CANNOT_CARRY_COMPRESSED)) {
-            this.cannotCarryCompressedNodes.remove(gridNode);
+            this.blockDense.remove(gridNode);
         }
 
         this.repath();
@@ -170,14 +186,29 @@ public class PathGridCache implements IPathingGrid {
         }
 
         if (gridNode.hasFlag(GridFlags.REQUIRE_CHANNEL)) {
-            this.nodesNeedingChannels.add(gridNode);
+            this.requireChannels.add(gridNode);
         }
 
         if (gridNode.hasFlag(GridFlags.CANNOT_CARRY_COMPRESSED)) {
-            this.cannotCarryCompressedNodes.add(gridNode);
+            this.blockDense.add(gridNode);
         }
 
         this.repath();
+    }
+
+    @Override
+    public void onSplit(final IGridStorage storageB) {
+
+    }
+
+    @Override
+    public void onJoin(final IGridStorage storageB) {
+
+    }
+
+    @Override
+    public void populateGridStorage(final IGridStorage storage) {
+
     }
 
     private void recalcController() {
@@ -210,44 +241,40 @@ public class PathGridCache implements IPathingGrid {
         }
     }
 
-    private int calculateAdHocChannels() {
-        var ignore = new HashSet<IGridNode>();
+    private int calculateRequiredChannels() {
+        this.semiOpen.clear();
 
-        int channels = 0;
-        for (final IGridNode node : this.nodesNeedingChannels) {
-            if (!ignore.contains(node)) {
-                final IGridBlock gb = node.getGridBlock();
+        int depth = 0;
+        for (final IGridNode nodes : this.requireChannels) {
+            if (!this.semiOpen.contains((IPathItem) nodes)) {
+                final IGridBlock gb = nodes.getGridBlock();
 
-                // Prevent ad-hoc networks from being connected to the outside and inside node of P2P tunnels at the same time
-                // this effectively prevents the nesting of P2P-tunnels in ad-hoc networks.
-                if (node.hasFlag(GridFlags.COMPRESSED_CHANNEL) && !this.cannotCarryCompressedNodes.isEmpty()) {
-                    return channelMode.getAdHocNetworkChannels() + 1;
+                if (nodes.hasFlag(GridFlags.COMPRESSED_CHANNEL) && !this.blockDense.isEmpty()) {
+                    return 9;
                 }
 
-                channels++;
+                depth++;
 
-                // Multiblocks only require a single channel. Add the remainder of the multi-block to the ignore-list,
-                // to make this method skip them for channel calculation.
-
-                if (node.hasFlag(GridFlags.MULTIBLOCK)) {
+                if (nodes.hasFlag(GridFlags.MULTIBLOCK)) {
                     final IGridMultiblock gmb = (IGridMultiblock) gb;
-                    final Iterator<IGridNode> it = gmb.getMultiblockNodes();
-                    while (it.hasNext()) {
-                        ignore.add(it.next());
+                    final Iterator<IGridNode> i = gmb.getMultiblockNodes();
+                    while (i.hasNext()) {
+                        this.semiOpen.add((IPathItem) i.next());
                     }
                 }
             }
         }
 
-        return channels;
+        return depth;
     }
 
     private void achievementPost() {
-        if (this.lastChannels != this.channelsInUse) {
-            final IAdvancementTrigger currentBracket = this.getAchievementBracket(this.channelsInUse);
+        if (this.lastChannels != this.getChannelsInUse()
+                && AEConfig.instance().getChannelMode() != ChannelMode.INFINITE) {
+            final IAdvancementTrigger currentBracket = this.getAchievementBracket(this.getChannelsInUse());
             final IAdvancementTrigger lastBracket = this.getAchievementBracket(this.lastChannels);
             if (currentBracket != lastBracket && currentBracket != null) {
-                for (final IGridNode n : this.nodesNeedingChannels) {
+                for (final IGridNode n : this.requireChannels) {
                     EntityPlayer player = AEApi.instance().registries().players().findPlayer(n.getPlayerID());
                     if (player instanceof EntityPlayerMP) {
                         currentBracket.trigger((EntityPlayerMP) player);
@@ -255,7 +282,7 @@ public class PathGridCache implements IPathingGrid {
                 }
             }
         }
-        this.lastChannels = this.channelsInUse;
+        this.lastChannels = this.getChannelsInUse();
     }
 
     private IAdvancementTrigger getAchievementBracket(final int ch) {
@@ -278,10 +305,10 @@ public class PathGridCache implements IPathingGrid {
     void updateNodReq(final MENetworkChannelChanged ev) {
         final IGridNode gridNode = ev.node;
 
-        if (gridNode.hasFlag(GridFlags.REQUIRE_CHANNEL)) {
-            this.nodesNeedingChannels.add(gridNode);
+        if (gridNode.getGridBlock().hasFlag(GridFlags.REQUIRE_CHANNEL)) {
+            this.requireChannels.add(gridNode);
         } else {
-            this.nodesNeedingChannels.remove(gridNode);
+            this.requireChannels.remove(gridNode);
         }
 
         this.repath();
@@ -289,7 +316,7 @@ public class PathGridCache implements IPathingGrid {
 
     @Override
     public boolean isNetworkBooting() {
-        return this.booting;
+        return !this.booting && !this.active.isEmpty();
     }
 
     @Override
@@ -299,15 +326,16 @@ public class PathGridCache implements IPathingGrid {
 
     @Override
     public void repath() {
-        if (!this.channelModeLocked) {
-            this.channelMode = AEConfig.instance().getChannelMode();
-        }
-
         // clean up...
-        this.ongoingCalculation = null;
+        this.active.clear();
 
-        this.channelsByBlocks = 0;
-        this.reboot = true;
+        this.setChannelsByBlocks(0);
+        this.updateNetwork = true;
+    }
+
+    @Override
+    public ChannelMode getChannelMode() {
+        return channelMode;
     }
 
     double getChannelPowerUsage() {
@@ -318,49 +346,19 @@ public class PathGridCache implements IPathingGrid {
         this.channelPowerUsage = channelPowerUsage;
     }
 
-    public ChannelMode getChannelMode() {
-        return channelMode;
+    public int getChannelsByBlocks() {
+        return this.channelsByBlocks;
     }
 
-    public void setForcedChannelMode(@Nullable ChannelMode forcedChannelMode) {
-        if (forcedChannelMode == null) {
-            if (this.channelModeLocked) {
-                this.channelModeLocked = false;
-                repath();
-            }
-        } else {
-            this.channelModeLocked = true;
-            if (this.channelMode != forcedChannelMode) {
-                this.channelMode = forcedChannelMode;
-                this.repath();
-            }
-        }
+    public void setChannelsByBlocks(final int channelsByBlocks) {
+        this.channelsByBlocks = channelsByBlocks;
     }
 
-    @Override
-    public void onSplit(IGridStorage destinationStorage) {
-        populateGridStorage(destinationStorage);
+    public int getChannelsInUse() {
+        return this.channelsInUse;
     }
 
-    @Override
-    public void onJoin(IGridStorage sourceStorage) {
-        var tag = sourceStorage.dataObject();
-        var channelModeName = tag.getString(TAG_CHANNEL_MODE);
-        try {
-            channelMode = ChannelMode.valueOf(channelModeName);
-            channelModeLocked = true;
-        } catch (IllegalArgumentException ignored) {
-            channelModeLocked = false;
-        }
-    }
-
-    @Override
-    public void populateGridStorage(IGridStorage destinationStorage) {
-        var tag = destinationStorage.dataObject();
-        if (channelModeLocked) {
-            tag.setString(TAG_CHANNEL_MODE, channelMode.name());
-        } else {
-            tag.removeTag(TAG_CHANNEL_MODE);
-        }
+    public void setChannelsInUse(final int channelsInUse) {
+        this.channelsInUse = channelsInUse;
     }
 }

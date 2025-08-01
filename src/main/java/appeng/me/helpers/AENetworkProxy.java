@@ -90,31 +90,21 @@ public class AENetworkProxy implements IGridBlock {
 
     public void validate() {
         if (this.gp instanceof AEBaseTile) {
-            TickHandler.instance().addInit((AEBaseTile) this.gp);
+            TickHandler.INSTANCE.addInit((AEBaseTile) this.gp);
         }
     }
 
-    public void onChunkUnloaded() {
+    public void onChunkUnload() {
         this.isReady = false;
-        this.remove();
+        this.invalidate();
     }
 
-    public void remove() {
+    public void invalidate() {
         this.isReady = false;
         if (this.node != null) {
             this.node.destroy();
             this.node = null;
         }
-    }
-
-    @Deprecated
-    public void onChunkUnload() {
-        this.onChunkUnloaded();
-    }
-
-    @Deprecated
-    public void invalidate() {
-        this.remove();
     }
 
     public void onReady() {
@@ -148,7 +138,7 @@ public class AENetworkProxy implements IGridBlock {
             this.data = null;
         } else if (this.node != null && this.owner != null) {
             final GameProfile profile = this.owner.getGameProfile();
-            final int playerID = WorldData.instance().playerData().getMePlayerId(profile);
+            final int playerID = WorldData.instance().playerData().getPlayerID(profile);
 
             this.node.setPlayerID(playerID);
             this.owner = null;

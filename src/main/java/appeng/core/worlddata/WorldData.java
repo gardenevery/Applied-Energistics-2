@@ -18,20 +18,22 @@
 
 package appeng.core.worlddata;
 
-import java.io.File;
-import java.util.concurrent.ThreadFactory;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import com.google.common.base.Preconditions;
-
-import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.config.Configuration;
 
 import appeng.core.AEConfig;
 import appeng.services.CompassService;
 import appeng.services.compass.CompassThreadFactory;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.config.Configuration;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+
 
 /**
  * Singleton access to anything related to world-based data.
@@ -58,6 +60,9 @@ public final class WorldData implements IWorldData {
     private final IWorldCompassData compassData;
     private final IWorldSpawnData spawnData;
 
+    private final List<IOnWorldStartable> startables;
+    private final List<IOnWorldStoppable> stoppables;
+
     private final File ae2directory;
     private final File spawnDirectory;
     private final File compassDirectory;
@@ -75,8 +80,8 @@ public final class WorldData implements IWorldData {
         final File settingsFile = new File(this.ae2directory, SETTING_FILE_NAME);
         this.sharedConfig = new Configuration(settingsFile, AEConfig.VERSION);
 
-        final PlayerData playerData = new PlayerData();
-        final StorageData storageData = new StorageData();
+        final PlayerData playerData = new PlayerData(this.sharedConfig);
+        final StorageData storageData = new StorageData(this.sharedConfig);
 
         final ThreadFactory compassThreadFactory = new CompassThreadFactory();
         final CompassService compassService = new CompassService(this.compassDirectory, compassThreadFactory);
@@ -88,6 +93,9 @@ public final class WorldData implements IWorldData {
         this.storageData = storageData;
         this.compassData = compassData;
         this.spawnData = spawnData;
+
+        this.startables = Lists.newArrayList(playerData, storageData);
+        this.stoppables = Lists.newArrayList(playerData, storageData, compassData);
     }
 
     /**
@@ -133,16 +141,26 @@ public final class WorldData implements IWorldData {
         if (!this.spawnDirectory.isDirectory() && !this.spawnDirectory.mkdir()) {
             throw new IllegalStateException("Failed to create " + this.spawnDirectory.getAbsolutePath());
         }
+
+        for (final IOnWorldStartable startable : this.startables) {
+            startable.onWorldStart();
+        }
+
+        this.startables.clear();
     }
 
     @Override
     public void onServerStopping() {
-        compassData.service().kill();
+        for (final IOnWorldStoppable stoppable : this.stoppables) {
+            stoppable.onWorldStop();
+        }
     }
 
     @Override
     public void onServerStoppped() {
         Preconditions.checkNotNull(instance);
+
+        this.stoppables.clear();
         instance = null;
     }
 

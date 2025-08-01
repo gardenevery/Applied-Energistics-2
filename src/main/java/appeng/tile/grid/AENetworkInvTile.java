@@ -63,7 +63,7 @@ public abstract class AENetworkInvTile extends AEBaseInvTile implements IActionH
     @Override
     public void onChunkUnload() {
         super.onChunkUnload();
-        this.getProxy().onChunkUnloaded();
+        this.getProxy().onChunkUnload();
     }
 
     @Override
@@ -75,7 +75,7 @@ public abstract class AENetworkInvTile extends AEBaseInvTile implements IActionH
     @Override
     public void invalidate() {
         super.invalidate();
-        this.getProxy().remove();
+        this.getProxy().invalidate();
     }
 
     @Override

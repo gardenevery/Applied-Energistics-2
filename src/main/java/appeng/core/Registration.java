@@ -190,7 +190,7 @@ final class Registration {
         ApiDefinitions definitions = api.definitions();
         definitions.getRegistry().getBootstrapComponents(IInitComponent.class).forEachRemaining(b -> b.initialize(event.getSide()));
 
-        MinecraftForge.EVENT_BUS.register(TickHandler.instance());
+        MinecraftForge.EVENT_BUS.register(TickHandler.INSTANCE);
 
         MinecraftForge.EVENT_BUS.register(new WrenchClickHook());
 

@@ -19,10 +19,9 @@
 package appeng.core.worlddata;
 
 
-import com.mojang.authlib.GameProfile;
-import net.minecraft.entity.player.EntityPlayer;
-
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import java.util.Optional;
+import java.util.UUID;
 
 
 /**
@@ -30,9 +29,23 @@ import javax.annotation.Nullable;
  * @version rv3 - 30.05.2015
  * @since rv3 30.05.2015
  */
-public interface IWorldPlayerData {
-    @Nullable
-    EntityPlayer getPlayerFromID(int playerID);
+public interface IWorldPlayerMapping {
+    /**
+     * Tries to retrieve the UUID of a player.
+     * Might not be stored inside of the map.
+     * Should not happen though.
+     *
+     * @param id ID of the to be searched player
+     * @return maybe the UUID of the searched player
+     */
+    @Nonnull
+    Optional<UUID> get(int id);
 
-    int getPlayerID(GameProfile profile);
+    /**
+     * Put in new players when they join the server
+     *
+     * @param id   id of new player
+     * @param uuid UUID of new player
+     */
+    void put(int id, @Nonnull UUID uuid);
 }

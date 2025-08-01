@@ -19,20 +19,11 @@
 package appeng.core.worlddata;
 
 
-import com.mojang.authlib.GameProfile;
-import net.minecraft.entity.player.EntityPlayer;
-
-import javax.annotation.Nullable;
-
-
 /**
  * @author thatsIch
  * @version rv3 - 30.05.2015
  * @since rv3 30.05.2015
  */
-public interface IWorldPlayerData {
-    @Nullable
-    EntityPlayer getPlayerFromID(int playerID);
-
-    int getPlayerID(GameProfile profile);
+public interface IOnWorldStartable {
+    void onWorldStart();
 }

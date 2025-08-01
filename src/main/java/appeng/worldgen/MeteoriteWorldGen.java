@@ -44,7 +44,7 @@ public final class MeteoriteWorldGen implements IWorldGenerator {
             final int z = r.nextInt(16) + (chunkZ << 4);
             final int depth = AEConfig.instance().getMeteoriteMaximumSpawnHeight() + r.nextInt(20);
 
-            TickHandler.instance().addCallable(w, new MeteoriteSpawn(x, depth, z));
+            TickHandler.INSTANCE.addCallable(w, new MeteoriteSpawn(x, depth, z));
         } else {
             WorldData.instance().compassData().service().updateArea(w, chunkX, chunkZ);
         }

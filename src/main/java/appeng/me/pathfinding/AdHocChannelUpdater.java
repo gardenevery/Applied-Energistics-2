@@ -37,7 +37,7 @@ public class AdHocChannelUpdater implements IGridConnectionVisitor {
     @Override
     public boolean visitNode(final IGridNode n) {
         final GridNode gn = (GridNode) n;
-        gn.setControllerRoute(null);
+        gn.setControllerRoute(null, true);
         gn.incrementChannelCount(this.usedChannels);
         gn.finalizeChannels();
         return true;
@@ -46,7 +46,7 @@ public class AdHocChannelUpdater implements IGridConnectionVisitor {
     @Override
     public void visitConnection(final IGridConnection gcc) {
         final GridConnection gc = (GridConnection) gcc;
-        gc.setControllerRoute(null);
+        gc.setControllerRoute(null, true);
         gc.incrementChannelCount(this.usedChannels);
         gc.finalizeChannels();
     }

@@ -269,7 +269,7 @@ public interface IPart extends IBoxProvider, ICustomCableConnection
 	 * yourself.
 	 */
 	@Override
-    float getCableConnectionLength(AECableType cable);
+	public float getCableConnectionLength( AECableType cable );
 
 	/**
 	 * same as Block.randomDisplayTick, for but parts.

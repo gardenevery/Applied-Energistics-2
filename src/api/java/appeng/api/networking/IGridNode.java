@@ -23,20 +23,15 @@
 
 package appeng.api.networking;
 
-
 import java.util.EnumSet;
-
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 import appeng.api.IAppEngApi;
 import appeng.api.util.AEPartLocation;
 import appeng.api.util.IReadOnlyCollection;
-
 
 /**
  * Gives you a view into your Nodes connections and information.
@@ -171,9 +166,6 @@ public interface IGridNode
 	 * @param playerID new player id
 	 */
 	void setPlayerID( int playerID );
-
-	@Nullable
-	<T extends IGridMultiblock> T getService(Class<T> serviceClass);
 
 	int getMaxChannels();
 

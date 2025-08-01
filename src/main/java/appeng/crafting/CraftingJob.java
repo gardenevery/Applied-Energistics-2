@@ -124,7 +124,7 @@ public class CraftingJob implements Runnable, ICraftingJob {
     public void run() {
         try {
             try {
-                TickHandler.instance().registerCraftingSimulation(this.world, this);
+                TickHandler.INSTANCE.registerCraftingSimulation(this.world, this);
                 this.handlePausing();
 
                 final MECraftingInventory craftingInventory = new MECraftingInventory(this.original, true, false, true);

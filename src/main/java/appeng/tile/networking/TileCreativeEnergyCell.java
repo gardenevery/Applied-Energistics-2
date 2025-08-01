@@ -68,10 +68,4 @@ public class TileCreativeEnergyCell extends AENetworkTile implements IAEPowerSto
     public double extractAEPower(final double amt, final Actionable mode, final PowerMultiplier pm) {
         return amt;
     }
-
-    @Override
-    public int getPriority() {
-        // MAX_VALUE to move creative cells to the front.
-        return Integer.MAX_VALUE;
-    }
 }

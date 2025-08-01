@@ -64,7 +64,7 @@ public class AENetworkTile extends AEBaseTile implements IActionHost, IGridProxy
     @Override
     public void onChunkUnload() {
         super.onChunkUnload();
-        this.getProxy().onChunkUnloaded();
+        this.getProxy().onChunkUnload();
     }
 
     @Override
@@ -76,7 +76,7 @@ public class AENetworkTile extends AEBaseTile implements IActionHost, IGridProxy
     @Override
     public void invalidate() {
         super.invalidate();
-        this.getProxy().remove();
+        this.getProxy().invalidate();
     }
 
     @Override

@@ -18,22 +18,20 @@
 
 package appeng.core.worlddata;
 
-import java.util.Map;
-import java.util.UUID;
+
+import appeng.core.AppEng;
+import com.google.common.base.Preconditions;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraftforge.common.config.ConfigCategory;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Optional;
+import java.util.UUID;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.mojang.authlib.GameProfile;
-
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagLongArray;
-import net.minecraft.world.storage.WorldSavedData;
-
-import appeng.core.AELog;
-import appeng.core.AppEng;
 
 /**
  * Handles the matching between UUIDs and internal IDs for security systems.
@@ -44,88 +42,83 @@ import appeng.core.AppEng;
  * @version rv3 - 30.05.2015
  * @since rv3 30.05.2015
  */
-final class PlayerData extends WorldSavedData implements IWorldPlayerData {
+final class PlayerData implements IWorldPlayerData, IOnWorldStartable, IOnWorldStoppable {
+    private static final String LAST_PLAYER_CATEGORY = "Counters";
+    private static final String LAST_PLAYER_KEY = "lastPlayer";
+    private static final int LAST_PLAYER_DEFAULT = 0;
 
-    public static final String NAME = AppEng.MOD_ID + "_players";
-    public static final String TAG_PLAYER_IDS = "playerIds";
-    public static final String TAG_PROFILE_IDS = "profileIds";
+    private final Configuration config;
+    private final IWorldPlayerMapping playerMapping;
 
-    private final BiMap<UUID, Integer> mapping = HashBiMap.create();
+    private int lastPlayerID;
 
-    // Caches the highest assigned player id + 1
-    private int nextPlayerId = 0;
+    public PlayerData(@Nonnull final Configuration configFile) {
+        Preconditions.checkNotNull(configFile);
 
-    public PlayerData() {
-        super(NAME);
+        this.config = configFile;
+
+        final ConfigCategory playerList = this.config.getCategory("players");
+        this.playerMapping = new PlayerMapping(playerList);
     }
 
     @Nullable
     @Override
-    public UUID getProfileId(final int playerId) {
-        return this.mapping.inverse().get(playerId);
+    public EntityPlayer getPlayerFromID(final int playerID) {
+        final Optional<UUID> maybe = this.playerMapping.get(playerID);
+
+        if (maybe.isPresent()) {
+            final UUID uuid = maybe.get();
+            for (final EntityPlayer player : AppEng.proxy.getPlayers()) {
+                if (player.getUniqueID().equals(uuid)) {
+                    return player;
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override
-    public int getMePlayerId(@Nonnull final GameProfile profile) {
+    public int getPlayerID(@Nonnull final GameProfile profile) {
         Preconditions.checkNotNull(profile);
+        Preconditions.checkNotNull(this.config.getCategory("players"));
+        Preconditions.checkState(profile.isComplete());
 
-        final UUID uuid = profile.getId();
-        Integer playerId = mapping.get(uuid);
+        final ConfigCategory players = this.config.getCategory("players");
+        final String uuid = profile.getId().toString();
+        final Property maybePlayerID = players.get(uuid);
 
-        if (playerId == null) {
-            playerId = this.nextPlayerId++;
-            this.mapping.put(profile.getId(), playerId);
-            markDirty();
-
-            AELog.info("Assigning ME player id {} to Minecraft profile {} ({})", playerId, profile.getId(), profile.getName());
-        }
-
-        return playerId;
-    }
-
-    @Override
-    public void readFromNBT(NBTTagCompound nbt) {
-        int[] playerIds = nbt.getIntArray(TAG_PLAYER_IDS);
-        long[] profileIds;
-        if (nbt.hasKey(TAG_PROFILE_IDS)) {
-            profileIds = ((NBTTagLongArray) nbt.getTag(TAG_PROFILE_IDS)).data;
+        if (maybePlayerID != null && maybePlayerID.isIntValue()) {
+            return maybePlayerID.getInt();
         } else {
-            profileIds = new long[0];
-        }
+            final int newPlayerID = this.nextPlayer();
+            final Property newPlayer = new Property(uuid, String.valueOf(newPlayerID), Property.Type.INTEGER);
+            players.put(uuid, newPlayer);
+            this.playerMapping.put(newPlayerID, profile.getId()); // add to reverse map
+            this.config.save();
 
-        if (playerIds.length * 2 != profileIds.length) {
-            throw new IllegalStateException("Player ID mapping is corrupted. "
-                    + playerIds.length + " player IDs vs. " + profileIds.length
-                    + " profile IDs (latter must be 2 * the former)");
+            return newPlayerID;
         }
+    }
 
-        this.mapping.clear();
-        int highestPlayerId = -1;
-        for (int i = 0; i < playerIds.length; i++) {
-            int playerId = playerIds[i];
-            UUID profileId = new UUID(profileIds[i * 2], profileIds[i * 2 + 1]);
-            highestPlayerId = Math.max(playerId, highestPlayerId);
-            mapping.put(profileId, playerId);
-            AELog.debug("AE player ID {} is assigned to profile ID {}", playerId, profileId);
-        }
-        this.nextPlayerId = highestPlayerId + 1;
+    private int nextPlayer() {
+        final int r = this.lastPlayerID;
+        this.lastPlayerID++;
+        this.config.get(LAST_PLAYER_CATEGORY, LAST_PLAYER_KEY, this.lastPlayerID).set(this.lastPlayerID);
+        return r;
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        int index = 0;
-        int[] playerIds = new int[mapping.size()];
-        long[] profileIds = new long[mapping.size() * 2];
-        for (Map.Entry<UUID, Integer> entry : mapping.entrySet()) {
-            profileIds[index * 2] = entry.getKey().getMostSignificantBits();
-            profileIds[index * 2 + 1] = entry.getKey().getLeastSignificantBits();
-            playerIds[index++] = entry.getValue();
-        }
+    public void onWorldStart() {
+        this.lastPlayerID = this.config.get(LAST_PLAYER_CATEGORY, LAST_PLAYER_KEY, LAST_PLAYER_DEFAULT).getInt(LAST_PLAYER_DEFAULT);
 
-        compound.setIntArray(TAG_PLAYER_IDS, playerIds);
-        compound.setTag(TAG_PROFILE_IDS, new NBTTagLongArray(profileIds));
-
-        return compound;
+        this.config.save();
     }
 
+    @Override
+    public void onWorldStop() {
+        this.config.save();
+
+        this.lastPlayerID = 0;
+    }
 }

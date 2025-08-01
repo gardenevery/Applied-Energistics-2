@@ -87,7 +87,7 @@ public class PartQuartzFiber extends AEBasePart implements IEnergyGridProvider {
     @Override
     public void removeFromWorld() {
         super.removeFromWorld();
-        this.outerProxy.remove();
+        this.outerProxy.invalidate();
     }
 
     @Override

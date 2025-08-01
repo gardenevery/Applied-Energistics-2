@@ -18,9 +18,21 @@
 
 package appeng.core;
 
+import java.io.File;
+import java.util.*;
+import java.util.stream.Stream;
+
+import appeng.api.networking.pathing.ChannelMode;
+import com.google.common.collect.Sets;
+
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import appeng.api.config.*;
-import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.core.features.AEFeature;
@@ -29,18 +41,6 @@ import appeng.items.materials.MaterialType;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
-import com.google.common.collect.Sets;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-
-import java.io.File;
-import java.util.*;
-import java.util.stream.Stream;
-
 
 public final class AEConfig extends Configuration implements IConfigurableObject, IConfigManagerHost {
 

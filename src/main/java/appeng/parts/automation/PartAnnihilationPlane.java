@@ -399,7 +399,7 @@ public class PartAnnihilationPlane extends PartBasicState implements IGridTickab
                                     new PacketTransitionEffect(pos.getX(), pos.getY(), pos.getZ(), this.getSide(), true));
                         } else {
                             this.breaking = true;
-                            TickHandler.instance().addCallable(this.getTile().getWorld(), this);
+                            TickHandler.INSTANCE.addCallable(this.getTile().getWorld(), this);
                         }
                         return TickRateModulation.URGENT;
                     }

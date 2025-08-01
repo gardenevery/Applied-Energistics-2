@@ -21,15 +21,7 @@ package appeng.tile.networking;
 
 public class TileDenseEnergyCell extends TileEnergyCell {
 
-    private final static double MAX_STORED = 200000 * 8;
-
     public TileDenseEnergyCell() {
-        this.setInternalMaxPower(MAX_STORED);
+        this.setInternalMaxPower(200000 * 8);
     }
-
-    @Override
-    public int getPriority() {
-        return 1600;
-    }
-
 }

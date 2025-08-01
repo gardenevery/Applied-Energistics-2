@@ -132,8 +132,10 @@ public class GridConnection implements IGridConnection, IPathItem {
     }
 
     @Override
-    public void setControllerRoute(IPathItem fast) {
-        this.lastUsedChannels = 0;
+    public void setControllerRoute(final IPathItem fast, final boolean zeroOut) {
+        if (zeroOut) {
+            this.lastUsedChannels = 0;
+        }
 
         if (this.sideB == fast) {
             final GridNode tmp = this.sideA;
@@ -145,7 +147,7 @@ public class GridConnection implements IGridConnection, IPathItem {
 
     @Override
     public boolean canSupportMoreChannels() {
-        return this.getLastUsedChannels() < getMaxChannels();
+        return this.getLastUsedChannels() < AEConfig.instance().getDenseChannelCapacity(); // max, PERIOD.
     }
 
     @Override

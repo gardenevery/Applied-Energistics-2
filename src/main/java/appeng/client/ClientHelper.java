@@ -222,7 +222,7 @@ public class ClientHelper extends ServerHelper {
 
     @SubscribeEvent
     public void postPlayerRender(final RenderLivingEvent.Pre p) {
-        final PlayerColor player = TickHandler.instance().getPlayerColors().get(p.getEntity().getEntityId());
+        final PlayerColor player = TickHandler.INSTANCE.getPlayerColors().get(p.getEntity().getEntityId());
         if (player != null) {
             final AEColor col = player.myColor;
 

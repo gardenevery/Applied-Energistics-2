@@ -18,6 +18,19 @@
 
 package appeng.parts.networking;
 
+import java.io.IOException;
+import java.util.EnumSet;
+
+import appeng.api.networking.pathing.ChannelMode;
+import com.google.common.collect.ImmutableSet;
+
+import io.netty.buffer.ByteBuf;
+
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 
 import appeng.api.AEApi;
 import appeng.api.config.SecurityPermissions;
@@ -27,7 +40,6 @@ import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
-import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.parts.BusSupport;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartCollisionHelper;
@@ -41,17 +53,6 @@ import appeng.items.tools.powered.ToolColorApplicator;
 import appeng.me.GridAccessException;
 import appeng.parts.AEBasePart;
 import appeng.util.Platform;
-import com.google.common.collect.ImmutableSet;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-
-import java.io.IOException;
-import java.util.EnumSet;
-
 
 public class PartCable extends AEBasePart implements IPartCable {
 

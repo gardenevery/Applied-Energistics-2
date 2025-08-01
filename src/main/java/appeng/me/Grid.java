@@ -18,9 +18,6 @@
 
 package appeng.me;
 
-import java.util.*;
-import java.util.Map.Entry;
-import javax.annotation.Nonnull;
 
 import appeng.api.AEApi;
 import appeng.api.networking.*;
@@ -30,6 +27,10 @@ import appeng.api.util.IReadOnlyCollection;
 import appeng.core.worlddata.WorldData;
 import appeng.hooks.TickHandler;
 import appeng.util.ReadOnlyCollection;
+
+import java.util.*;
+import java.util.Map.Entry;
+
 
 public class Grid implements IGrid {
     private final NetworkEventBus eventBus = new NetworkEventBus();
@@ -54,7 +55,7 @@ public class Grid implements IGrid {
 
         this.postEvent(new MENetworkPostCacheConstruction());
 
-        TickHandler.instance().addNetwork(this);
+        TickHandler.INSTANCE.addNetwork(this);
         center.setGrid(this);
     }
 
@@ -102,7 +103,7 @@ public class Grid implements IGrid {
                 this.pivot = (GridNode) n.next();
             } else {
                 this.pivot = null;
-                TickHandler.instance().removeNetwork(this);
+                TickHandler.INSTANCE.removeNetwork(this);
                 this.myStorage.remove();
             }
         }
@@ -215,16 +216,6 @@ public class Grid implements IGrid {
     @Override
     public IGridNode getPivot() {
         return this.pivot;
-    }
-
-    @Nonnull
-    @Override
-    public Iterable<IGridNode> getMachineNodes(@Nonnull Class<?> machineClass) {
-        if (IGridHost.class.isAssignableFrom(machineClass)) {
-            Class<? extends IGridHost> hostClass = (Class<? extends IGridHost>) machineClass;
-            return this.getMachines(hostClass);
-        }
-        return Collections.emptyList();
     }
 
     void setPivot(final GridNode pivot) {

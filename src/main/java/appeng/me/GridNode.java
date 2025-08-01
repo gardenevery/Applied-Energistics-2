@@ -18,17 +18,6 @@
 
 package appeng.me;
 
-import java.util.*;
-
-import com.google.common.collect.ClassToInstanceMap;
-
-import com.google.common.collect.MutableClassToInstanceMap;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import appeng.api.exceptions.FailedConnectionException;
 import appeng.api.exceptions.SecurityConnectionException;
 import appeng.api.networking.*;
@@ -40,14 +29,21 @@ import appeng.api.util.AEColor;
 import appeng.api.util.AEPartLocation;
 import appeng.api.util.DimensionalCoord;
 import appeng.api.util.IReadOnlyCollection;
+import appeng.core.AEConfig;
 import appeng.core.AELog;
+import appeng.core.features.AEFeature;
 import appeng.core.worlddata.WorldData;
 import appeng.hooks.TickHandler;
 import appeng.me.pathfinding.IPathItem;
 import appeng.util.IWorldCallable;
 import appeng.util.ReadOnlyCollection;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
+import java.util.*;
 
 public class GridNode implements IGridNode, IPathItem {
     private static final MENetworkChannelsChanged EVENT = new MENetworkChannelsChanged();
@@ -65,8 +61,6 @@ public class GridNode implements IGridNode, IPathItem {
     private int compressedData = 0;
     private int usedChannels = 0;
     private int lastUsedChannels = 0;
-
-    private ClassToInstanceMap<IGridMultiblock> services = null;
 
     public GridNode(final IGridBlock what) {
         this.gridProxy = what;
@@ -309,7 +303,15 @@ public class GridNode implements IGridNode, IPathItem {
 
     @Override
     public boolean meetsChannelRequirements() {
-        return !hasFlag(GridFlags.REQUIRE_CHANNEL) || this.getUsedChannels() > 0;
+        if (!this.hasFlag(GridFlags.REQUIRE_CHANNEL)) {
+            return true;
+        }
+
+        if (AEConfig.instance().getChannelMode() == ChannelMode.INFINITE) {
+            return true;
+        }
+
+        return this.getUsedChannels() > 0;
     }
 
     @Override
@@ -380,7 +382,7 @@ public class GridNode implements IGridNode, IPathItem {
                             GridConnection.create(node, this, f.getOpposite());
                         } catch (SecurityConnectionException e) {
                             AELog.debug(e);
-                            TickHandler.instance().addCallable(node.getWorld(), new MachineSecurityBreak(this));
+                            TickHandler.INSTANCE.addCallable(node.getWorld(), new MachineSecurityBreak(this));
 
                             return;
                         } catch (final FailedConnectionException e) {
@@ -407,7 +409,7 @@ public class GridNode implements IGridNode, IPathItem {
                 } catch (SecurityConnectionException e) {
                     AELog.debug(e);
 
-                    TickHandler.instance().addCallable(node.getWorld(), new MachineSecurityBreak(this));
+                    TickHandler.INSTANCE.addCallable(node.getWorld(), new MachineSecurityBreak(this));
 
                     return;
                 } catch (final FailedConnectionException e) {
@@ -490,8 +492,8 @@ public class GridNode implements IGridNode, IPathItem {
 
     void setGridStorage(final GridStorage s) {
         this.myStorage = s;
-        // Don't reset the channels, since we want the node to remain active until repathing is done to immediately
-        // re-add services (such as storage) for active nodes when they join the grid.
+        this.usedChannels = 0;
+        this.lastUsedChannels = 0;
     }
 
     @Override
@@ -504,8 +506,10 @@ public class GridNode implements IGridNode, IPathItem {
     }
 
     @Override
-    public void setControllerRoute(final IPathItem fast) {
-        this.usedChannels = 0;
+    public void setControllerRoute(final IPathItem fast, final boolean zeroOut) {
+        if (zeroOut) {
+            this.usedChannels = 0;
+        }
 
         final int idx = this.connections.indexOf((IGridConnection) fast);
         if (idx > 0) {
@@ -519,21 +523,14 @@ public class GridNode implements IGridNode, IPathItem {
         return this.getUsedChannels() < this.getMaxChannels();
     }
 
-    @Override
     public int getMaxChannels() {
         if (hasFlag(GridFlags.CANNOT_CARRY)) {
             return 0;
         }
-
-        var channelMode = myGrid.getPathingGrid().getChannelMode();
-        if (channelMode == ChannelMode.INFINITE) {
-            return Integer.MAX_VALUE;
-        }
-
-        if (!hasFlag(GridFlags.DENSE_CAPACITY)) {
-            return 8 * channelMode.getCableCapacityFactor();
+        if (hasFlag(GridFlags.DENSE_CAPACITY)) {
+            return AEConfig.instance().getDenseChannelCapacity();
         } else {
-            return 32 * channelMode.getCableCapacityFactor();
+            return AEConfig.instance().getNormalChannelCapacity();
         }
     }
 
@@ -549,23 +546,17 @@ public class GridNode implements IGridNode, IPathItem {
 
     @Override
     public void finalizeChannels() {
-        if (hasFlag(GridFlags.CANNOT_CARRY)) {
+        if (this.hasFlag(GridFlags.CANNOT_CARRY)) {
             return;
         }
 
-        if (this.lastUsedChannels != this.getUsedChannels()) {
+        if (this.lastUsedChannels != this.usedChannels) {
             this.lastUsedChannels = this.usedChannels;
 
             if (this.getInternalGrid() != null) {
                 this.getInternalGrid().postEventTo(this, EVENT);
             }
         }
-    }
-
-    @Nullable
-    @Override
-    public <T extends IGridMultiblock> T getService(Class<T> serviceClass) {
-        return services != null ? services.getInstance(serviceClass) : null;
     }
 
     public long getLastSecurityKey() {

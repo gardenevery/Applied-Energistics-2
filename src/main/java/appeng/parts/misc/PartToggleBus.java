@@ -126,7 +126,7 @@ public class PartToggleBus extends PartBasicState {
     @Override
     public void removeFromWorld() {
         super.removeFromWorld();
-        this.getOuterProxy().remove();
+        this.getOuterProxy().invalidate();
     }
 
     @Override

@@ -23,18 +23,19 @@
 
 package appeng.api.networking;
 
+
 /**
  * Various flags to determine network node behavior.
  */
-public enum GridFlags {
+public enum GridFlags
+{
 	/**
 	 * import/export buses, terminals, and other devices that use network features, will use this setting.
 	 */
 	REQUIRE_CHANNEL,
 
 	/**
-	 * This is used for the inner node of ME-P2P tunnels, which connects to the grid that will carry the content of the
-	 * P2P tunnel compressed into a single channel.
+	 * P2P ME tunnels use this setting.
 	 */
 	COMPRESSED_CHANNEL,
 
@@ -44,30 +45,26 @@ public enum GridFlags {
 	CANNOT_CARRY,
 
 	/**
-	 * This is used for the outer node of ME-P2P tunnels, which provides the 32-channel connection at both ends of the
-	 * tunnel.
+	 * Used by P2P Tunnels to prevent tunnels from tunneling recursively.
 	 */
 	CANNOT_CARRY_COMPRESSED,
 
 	/**
 	 * This node can transmit 32 signals, this should only apply to Tier2 Cable, P2P Tunnels, and Quantum Network
 	 * Bridges.
-	 * <p>
-	 * Causes paths through these nodes to be strongly preferred.
 	 */
 	DENSE_CAPACITY,
 
 	/**
 	 * This block is part of a multiblock, used in conjunction with REQUIRE_CHANNEL, and {@link IGridMultiblock} see
-	 * this interface for details.
+	 * this
+	 * interface for details.
 	 */
 	MULTIBLOCK,
 
 	/**
-	 * Causes paths through these nodes to be preferred. This is used by Tier1 Cables and Toggle Busses to make paths go
-	 * through them rather than ordinary devices if possible.
-	 * <p>
-	 * Does not need to be set if {@link #DENSE_CAPACITY} is already set.
+	 * Indicates which path might be preferred, this only matters if two routes of equal length exist, ad only changes
+	 * the order they are processed in.
 	 */
 	PREFERRED
 }
