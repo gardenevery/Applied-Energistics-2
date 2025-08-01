@@ -132,22 +132,26 @@ public class GridConnection implements IGridConnection, IPathItem {
     }
 
     @Override
-    public void setControllerRoute(final IPathItem fast, final boolean zeroOut) {
+    public void setControllerRoute(IPathItem fast, boolean zeroOut) {
         if (zeroOut) {
             this.lastUsedChannels = 0;
         }
 
+        // If the shortest route to the controller is via side B, we need to flip the
+        // connections sides because side A should be the closest route to the controller.
         if (this.sideB == fast) {
-            final GridNode tmp = this.sideA;
+            var tmp = this.sideA;
             this.sideA = this.sideB;
             this.sideB = tmp;
-            this.fromAtoB = this.fromAtoB.getOpposite();
+            if (this.fromAtoB != null) {
+                this.fromAtoB = this.fromAtoB.getOpposite();
+            }
         }
     }
 
     @Override
     public boolean canSupportMoreChannels() {
-        return this.getLastUsedChannels() < AEConfig.instance().getDenseChannelCapacity(); // max, PERIOD.
+        return this.getLastUsedChannels() < getMaxChannels();
     }
 
     @Override

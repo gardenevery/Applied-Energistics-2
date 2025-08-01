@@ -23,19 +23,18 @@
 
 package appeng.api.networking;
 
-
 /**
  * Various flags to determine network node behavior.
  */
-public enum GridFlags
-{
+public enum GridFlags {
 	/**
 	 * import/export buses, terminals, and other devices that use network features, will use this setting.
 	 */
 	REQUIRE_CHANNEL,
 
 	/**
-	 * P2P ME tunnels use this setting.
+	 * This is used for the inner node of ME-P2P tunnels, which connects to the grid that will carry the content of the
+	 * P2P tunnel compressed into a single channel.
 	 */
 	COMPRESSED_CHANNEL,
 
@@ -45,7 +44,8 @@ public enum GridFlags
 	CANNOT_CARRY,
 
 	/**
-	 * Used by P2P Tunnels to prevent tunnels from tunneling recursively.
+	 * This is used for the outer node of ME-P2P tunnels, which provides the 32-channel connection at both ends
+	 * of the tunnel.
 	 */
 	CANNOT_CARRY_COMPRESSED,
 
@@ -57,8 +57,7 @@ public enum GridFlags
 
 	/**
 	 * This block is part of a multiblock, used in conjunction with REQUIRE_CHANNEL, and {@link IGridMultiblock} see
-	 * this
-	 * interface for details.
+	 * this interface for details.
 	 */
 	MULTIBLOCK,
 

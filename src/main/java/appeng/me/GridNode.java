@@ -523,14 +523,21 @@ public class GridNode implements IGridNode, IPathItem {
         return this.getUsedChannels() < this.getMaxChannels();
     }
 
+    @Override
     public int getMaxChannels() {
         if (hasFlag(GridFlags.CANNOT_CARRY)) {
             return 0;
         }
-        if (hasFlag(GridFlags.DENSE_CAPACITY)) {
-            return AEConfig.instance().getDenseChannelCapacity();
+
+        var channelMode = myGrid.getPathingGrid().getChannelMode();
+        if (channelMode == ChannelMode.INFINITE) {
+            return Integer.MAX_VALUE;
+        }
+
+        if (!hasFlag(GridFlags.DENSE_CAPACITY)) {
+            return 8 * channelMode.getCableCapacityFactor();
         } else {
-            return AEConfig.instance().getNormalChannelCapacity();
+            return 32 * channelMode.getCableCapacityFactor();
         }
     }
 

@@ -40,8 +40,7 @@ import appeng.api.util.IReadOnlyCollection;
  *
  * Don't Implement; Acquire from {@link IAppEngApi}.createGridNode
  */
-public interface IGridNode
-{
+public interface IGridNode {
 
 	/**
 	 * lets you walk the grid stating at the current node using a IGridVisitor, generally not needed, please use only if
